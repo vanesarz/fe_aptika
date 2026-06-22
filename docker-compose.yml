@@ -1,0 +1,30 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Build-time argument for Next.js to compile the API URL.
+        # Change this if your backend is hosted on a different URL/port.
+        - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    container_name: raptika_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+    # 💡 TIP: FOR LOCAL DEVELOPMENT WITH HOT-RELOAD:
+    # If you want to use Docker for live development instead of production mode:
+    # 1. Comment out 'dockerfile: Dockerfile' above (or create a Dockerfile.dev)
+    # 2. Add the following lines to run next dev directly with local file mounts:
+    #
+    # image: node:20-alpine
+    # command: npm run dev
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules
+    #   - /app/.next
+    # environment:
+    #   - NEXT_PUBLIC_API_URL=http://localhost:8000/api
