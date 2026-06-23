@@ -6,7 +6,7 @@ services:
       args:
         # Build-time argument for Next.js to compile the API URL.
         # Change this if your backend is hosted on a different URL/port.
-        - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+        - NEXT_PUBLIC_API_URL=https://beaptika-production.up.railway.app/api
     container_name: raptika_frontend
     restart: unless-stopped
     ports:
