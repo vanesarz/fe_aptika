@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -708,4 +708,4 @@ export const deleteAdminUser = async (id: number) => {
   const res = await api.delete(`/admin/users/${id}`);
   return res.data;
 };
-
+
