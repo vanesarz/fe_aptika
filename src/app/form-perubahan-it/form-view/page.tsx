@@ -249,25 +249,13 @@ export default function FormView({ onSuccess }: { onSuccess: (data: any) => void
               <div className="md:col-span-2"><label className={labelCls}>Latar Belakang Perubahan {reqMark}</label><input required type="text" className={inputCls} placeholder="Jelaskan Latar Belakang Perubahan" value={latarBelakang} onChange={e => setLatarBelakang(e.target.value)} /></div>
 
               <div className="md:col-span-2"><label className={labelCls}>Rincian Atas Perubahan Yang Diajukan {reqMark}</label><input required type="text" className={inputCls} placeholder="Jelaskan Rincian Perubahan yang Diajukan" value={rincianPerubahan} onChange={e => setRincianPerubahan(e.target.value)} /></div>
-              <div className="md:col-span-2">
-                <label className={labelCls}>Kriteria Risiko Bila Perubahan Tidak Dilakukan {reqMark}</label>
+                <div className="md:col-span-1">
+                <label className={labelCls}>Risiko Bila Perubahan Tidak Dilakukan {reqMark}</label>
                 <select required className={inputCls} value={kriteriaRisiko} onChange={e => setKriteriaRisiko(e.target.value)}>
                   <option value="" disabled>Pilih Kriteria Risiko</option>
                   {KRITERIA_RISIKO_OPTIONS.map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
-                </select>
-              </div>
-
-              <div className="md:col-span-1">
-                <label className={labelCls}>Risiko Bila Perubahan Tidak Dilakukan {reqMark}</label>
-                <select required className={inputCls} value={risikoTidakDilakukan} onChange={e => setRisikoTidakDilakukan(e.target.value)}>
-                  <option value="" disabled>Pilih Tingkat Risiko</option>
-                  <option value="Malapetaka">Malapetaka</option>
-                  <option value="Sangat Berat">Sangat Berat</option>
-                  <option value="Berat">Berat</option>
-                  <option value="Agak Berat">Agak Berat</option>
-                  <option value="Tidak Berat">Tidak Berat</option>
                 </select>
               </div>
               <div className="md:col-span-1"><label className={labelCls}>Keterangan {reqMark}</label><input required type="text" className={inputCls} placeholder="Masukkan Keterangan Tingkat Risiko" value={keterangan} onChange={e => setKeterangan(e.target.value)} /></div>
