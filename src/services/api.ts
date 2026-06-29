@@ -709,3 +709,36 @@ export const deleteAdminUser = async (id: number) => {
   return res.data;
 };
 
+// ==========================================
+// 10. Surat Perjalanan Dinas (SPD)
+// ==========================================
+export const getSpdList = async () => {
+  const res = await api.get("/spd");
+  return res.data;
+};
+
+export const getSpdById = async (id: number) => {
+  const res = await api.get(`/spd/${id}`);
+  return res.data;
+};
+
+export const createSpd = async (payload: any) => {
+  const res = await api.post("/spd", payload);
+  return res.data;
+};
+
+export const updateSpd = async (id: number, payload: any) => {
+  const res = await api.put(`/spd/${id}`, payload);
+  return res.data;
+};
+
+export const deleteSpd = async (id: number) => {
+  const res = await api.delete(`/spd/${id}`);
+  return res.data;
+};
+
+export const submitSpdLaporan = async (payload: any) => {
+  const res = await api.post("/spd/laporan", payload);
+  return res.data;
+};
+
