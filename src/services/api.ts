@@ -738,8 +738,3 @@ export const deleteSpd = async (id: number) => {
   return res.data;
 };
 
-export const submitSpdLaporan = async (payload: any) => {
-  const res = await api.post("/spd/laporan", payload);
-  return res.data;
-};
-

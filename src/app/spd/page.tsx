@@ -343,7 +343,6 @@ export default function SpdDashboardPage() {
                           >
                             Cetak
                           </button>
-
                           <button
                             onClick={() => handleDelete(item.id)}
                             style={{
