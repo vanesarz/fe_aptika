@@ -53,30 +53,30 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
   }, [id]);
 
   useEffect(() => {
-    if (data && data.noSpd) {
-      // Ganti karakter "/" menjadi "_" karena "/" dilarang di nama file sistem operasi
-      const sanitizedNoSpd = data.noSpd.replace(/\//g, "_");
-      document.title = `SPD_${sanitizedNoSpd}`;
-    }
-    return () => {
+    const handleBeforePrint = () => {
+      if (data && data.noSpd) {
+        const sanitizedNoSpd = data.noSpd.replace(/\//g, "_");
+        document.title = `SPD_${sanitizedNoSpd}`;
+      } else if (data && data.nama) {
+        document.title = `SPD_${data.nama.replace(/\s+/g, "_")}`;
+      }
+    };
+
+    const handleAfterPrint = () => {
       document.title = "Aptika Tools";
+    };
+
+    window.addEventListener("beforeprint", handleBeforePrint);
+    window.addEventListener("afterprint", handleAfterPrint);
+
+    return () => {
+      window.removeEventListener("beforeprint", handleBeforePrint);
+      window.removeEventListener("afterprint", handleAfterPrint);
     };
   }, [data]);
 
   const handlePrint = () => {
-    const originalTitle = document.title;
-    if (data && data.noSpd) {
-      const sanitizedNoSpd = data.noSpd.replace(/\//g, "_");
-      document.title = `SPD_${sanitizedNoSpd}`;
-    } else if (data && data.nama) {
-      // Jika noSpd tidak ada, fallback ke nama pegawai
-      document.title = `SPD_${data.nama.replace(/\s+/g, "_")}`;
-    }
-    
     window.print();
-    
-    // Kembalikan ke judul asli setelah dialog print ditutup
-    document.title = originalTitle;
   };
 
   if (loading) {
