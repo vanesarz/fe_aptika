@@ -282,7 +282,7 @@ export default function SpdDashboardPage() {
                   else if (item.status === "SELESAI") { badgeBg = "#dcfce7"; badgeColor = "#15803d"; }
 
                   return (
-                    <tr key={item.id} style={{ borderBottom: "1px solid #f1f5f9", hover: { backgroundColor: "#f8fafc" } }}>
+                    <tr key={item.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "12px 8px", color: "#64748b" }}>{index + 1}</td>
                       <td style={{ padding: "12px 8px" }}>
                         <div style={{ fontWeight: "600", color: "#0f2540" }}>{item.nama}</div>
@@ -339,21 +339,6 @@ export default function SpdDashboardPage() {
                             }}
                           >
                             Cetak
-                          </button>
-                          <button
-                            onClick={() => router.push(`/spd/laporan/${item.id}`)}
-                            style={{
-                              backgroundColor: "#15803d",
-                              color: "white",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "600"
-                            }}
-                          >
-                            LHPD
                           </button>
                           <button
                             onClick={() => handleDelete(item.id)}
