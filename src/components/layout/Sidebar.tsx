@@ -12,6 +12,7 @@ const TEAMS = [
   { name: "Sidebar Jabar",               key: "sidebarjabar" },
   { name: "Smart Jabar",                 key: "smartjabar" },
   { name: "Sada Jabar",                   key: "sadajabar" },
+  { name: "Surat Perjalanan Dinas (SPD)", key: "spd" },
 ];
 
 export default function Sidebar() {
