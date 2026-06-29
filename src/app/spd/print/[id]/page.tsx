@@ -52,6 +52,17 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    if (data && data.noSpd) {
+      // Ganti karakter "/" menjadi "_" karena "/" dilarang di nama file sistem operasi
+      const sanitizedNoSpd = data.noSpd.replace(/\//g, "_");
+      document.title = `SPD_${sanitizedNoSpd}`;
+    }
+    return () => {
+      document.title = "Aptika Tools";
+    };
+  }, [data]);
+
   const handlePrint = () => {
     window.print();
   };
