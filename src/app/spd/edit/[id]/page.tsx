@@ -81,44 +81,47 @@ export default function SpdEditPage({ params }: EditPageProps) {
       setLoading(true);
       try {
         const res = await getSpdById(Number(id));
-        const data = res?.data || mockItems[id] || mockItems["1"];
-        
-        setNoSpd(data.noSpd || "");
-        setPejabatPemberi(data.pejabatPemberi || "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
-        setNamaPegawai(data.nama);
-        setNipPegawai(data.nip);
-        setPangkatPegawai(data.pangkat || "");
-        setJabatanPegawai(data.jabatan || "");
-        setMaksudPerjalanan(data.maksud);
-        setAngkutan(data.angkutan || "Kendaraan Dinas");
-        setTempatBerangkat(data.tempatBerangkat || "Bandung");
-        setTempatTujuan(data.tempatTujuan);
-        setTglMulai(data.tglMulai);
-        setTglSelesai(data.tglSelesai);
-        setPengikut(data.pengikut || []);
-        
-        // Split or map budget if backend stores combined total
-        setUangHarian(data.uangHarian || data.anggaran / 3 || 0);
-        setUangTransport(data.uangTransport || data.anggaran / 3 || 0);
-        setUangHotel(data.uangHotel || data.anggaran / 3 || 0);
-      } catch {
-        const data = mockItems[id] || mockItems["1"];
-        setNoSpd(data.noSpd || "");
-        setPejabatPemberi(data.pejabatPemberi);
-        setNamaPegawai(data.nama);
-        setNipPegawai(data.nip);
-        setPangkatPegawai(data.pangkat);
-        setJabatanPegawai(data.jabatan);
-        setMaksudPerjalanan(data.maksud);
-        setAngkutan(data.angkutan);
-        setTempatBerangkat(data.tempatBerangkat);
-        setTempatTujuan(data.tempatTujuan);
-        setTglMulai(data.tglMulai);
-        setTglSelesai(data.tglSelesai);
-        setPengikut(data.pengikut);
-        setUangHarian(data.uangHarian);
-        setUangTransport(data.uangTransport);
-        setUangHotel(data.uangHotel);
+        // Dukung response langsung (array/object) maupun nested di .data
+        const raw = res?.data ?? res;
+        const data = raw || mockItems[id] || mockItems["1"];
+
+        setNoSpd(data.noSpd ?? data.no_spd ?? "");
+        setPejabatPemberi(
+          data.pejabatPemberi ?? data.pejabat_pemberi ?? 
+          "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat"
+        );
+        setNamaPegawai(data.nama ?? "");
+        setNipPegawai(data.nip ?? "");
+        setPangkatPegawai(data.pangkat ?? "");
+        setJabatanPegawai(data.jabatan ?? "");
+        setMaksudPerjalanan(data.maksud ?? "");
+        setAngkutan(data.angkutan ?? "Kendaraan Dinas");
+        // Backend bisa simpan sebagai tempatBerangkat atau asal
+        setTempatBerangkat(data.tempatBerangkat ?? data.asal ?? "Bandung");
+        // Backend bisa simpan sebagai tempatTujuan atau tujuan
+        setTempatTujuan(data.tempatTujuan ?? data.tujuan ?? "");
+        setTglMulai(data.tglMulai ?? data.tgl_mulai ?? "");
+        setTglSelesai(data.tglSelesai ?? data.tgl_selesai ?? "");
+
+        // Pengikut: bisa berupa JSON string atau array
+        let pengikutData = data.pengikut ?? [];
+        if (typeof pengikutData === "string") {
+          try { pengikutData = JSON.parse(pengikutData); } catch { pengikutData = []; }
+        }
+        setPengikut(Array.isArray(pengikutData) ? pengikutData : []);
+
+        // Anggaran: bisa tersimpan terpisah atau sebagai total
+        const totalAnggaran = Number(data.anggaran ?? 0);
+        setUangHarian(Number(data.uangHarian ?? data.uang_harian ?? (totalAnggaran > 0 ? Math.round(totalAnggaran / 3) : 0)));
+        setUangTransport(Number(data.uangTransport ?? data.uang_transport ?? (totalAnggaran > 0 ? Math.round(totalAnggaran / 3) : 0)));
+        setUangHotel(Number(data.uangHotel ?? data.uang_hotel ?? (totalAnggaran > 0 ? Math.round(totalAnggaran / 3) : 0)));
+      } catch (err) {
+        console.error("Gagal fetch SPD:", err);
+        // Tidak pakai mock — biarkan form kosong agar user tahu ada error
+        setNamaPegawai("");
+        setNipPegawai("");
+        setTempatTujuan("");
+        setMaksudPerjalanan("");
       } finally {
         setLoading(false);
       }
@@ -169,11 +172,16 @@ export default function SpdEditPage({ params }: EditPageProps) {
       maksud: maksudPerjalanan,
       angkutan,
       tempatBerangkat,
+      asal: tempatBerangkat,          // alias backend
       tempatTujuan,
+      tujuan: tempatTujuan,           // alias backend
       tglMulai,
       tglSelesai,
       durasi: durasiHari,
-      pengikut,
+      pengikut: JSON.stringify(pengikut),
+      uangHarian: Number(uangHarian),
+      uangTransport: Number(uangTransport),
+      uangHotel: Number(uangHotel),
       anggaran: Number(uangHarian) + Number(uangTransport) + Number(uangHotel),
       status
     };

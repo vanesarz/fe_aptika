@@ -212,7 +212,18 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
         {/* Kop Dinas */}
         <div className="kop-surat-inner">
           <div className="kop-surat">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/West_Java_coa.png/434px-West_Java_coa.png" alt="Logo Jabar" className="kop-logo" />
+            <img 
+              src="/logo-jabar.png" 
+              alt="Logo Jabar" 
+              className="kop-logo"
+              onError={(e) => { 
+                const t = e.target as HTMLImageElement;
+                if (!t.dataset.fallback) {
+                  t.dataset.fallback = "1";
+                  t.src = "https://upload.wikimedia.org/wikipedia/commons/0/07/West_Java_coa.png";
+                }
+              }} 
+            />
             <div className="kop-teks">
               <div style={{ fontSize: "14px", fontWeight: "normal" }}>PEMERINTAH DAERAH PROVINSI JAWA BARAT</div>
               <div style={{ fontSize: "18px", fontWeight: "bold" }}>DINAS KOMUNIKASI DAN INFORMATIKA</div>
