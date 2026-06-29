@@ -42,7 +42,12 @@ export default function Sidebar() {
 
   const handleTeamClick = (key: string) => {
     setIsOpen(false);
-    router.push(`/${key}/dashboard`);
+    // SPD tidak memiliki subfolder /dashboard, langsung ke /${key}
+    if (key === "spd") {
+      router.push(`/${key}`);
+    } else {
+      router.push(`/${key}/dashboard`);
+    }
   };
 
   const handleLogout = async () => {
