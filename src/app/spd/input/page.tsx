@@ -9,6 +9,7 @@ export default function SpdInputPage() {
   const [loading, setLoading] = useState(false);
 
   // Form states
+  const [noSpd, setNoSpd] = useState("");
   const [pejabatPemberi, setPejabatPemberi] = useState("Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
   const [namaPegawai, setNamaPegawai] = useState("");
   const [nipPegawai, setNipPegawai] = useState("");
@@ -65,6 +66,7 @@ export default function SpdInputPage() {
 
     setLoading(true);
     const payload = {
+      noSpd,
       pejabatPemberi,
       nama: namaPegawai,
       nip: nipPegawai,
@@ -127,6 +129,17 @@ export default function SpdInputPage() {
           </h2>
           
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Nomor Surat</label>
+              <input
+                type="text"
+                placeholder="Contoh: 1818/KOM.03.01.08/APTIKA"
+                value={noSpd}
+                onChange={(e) => setNoSpd(e.target.value)}
+                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+              />
+            </div>
+
             <div>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Pejabat Pemberi Perintah</label>
               <input

@@ -15,6 +15,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
   const [submitting, setSubmitting] = useState(false);
 
   // Form states
+  const [noSpd, setNoSpd] = useState("");
   const [pejabatPemberi, setPejabatPemberi] = useState("");
   const [namaPegawai, setNamaPegawai] = useState("");
   const [nipPegawai, setNipPegawai] = useState("");
@@ -82,6 +83,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
         const res = await getSpdById(Number(id));
         const data = res?.data || mockItems[id] || mockItems["1"];
         
+        setNoSpd(data.noSpd || "");
         setPejabatPemberi(data.pejabatPemberi || "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
         setNamaPegawai(data.nama);
         setNipPegawai(data.nip);
@@ -101,6 +103,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
         setUangHotel(data.uangHotel || data.anggaran / 3 || 0);
       } catch {
         const data = mockItems[id] || mockItems["1"];
+        setNoSpd(data.noSpd || "");
         setPejabatPemberi(data.pejabatPemberi);
         setNamaPegawai(data.nama);
         setNipPegawai(data.nip);
@@ -157,6 +160,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
 
     setSubmitting(true);
     const payload = {
+      noSpd,
       pejabatPemberi,
       nama: namaPegawai,
       nip: nipPegawai,
@@ -222,6 +226,17 @@ export default function SpdEditPage({ params }: EditPageProps) {
           </h2>
           
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Nomor Surat</label>
+              <input
+                type="text"
+                placeholder="Contoh: 1818/KOM.03.01.08/APTIKA"
+                value={noSpd}
+                onChange={(e) => setNoSpd(e.target.value)}
+                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+              />
+            </div>
+
             <div>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Pejabat Pemberi Perintah</label>
               <input

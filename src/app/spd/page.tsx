@@ -71,8 +71,8 @@ export default function SpdDashboardPage() {
       setLoading(true);
       try {
         const res = await getSpdList();
-        if (res?.data) {
-          setSpdList(res.data);
+        if (Array.isArray(res)) {
+          setSpdList(res.length > 0 ? res : []); // Atur ke array kosong jika tidak ada data dari backend (bukan pakai mock)
         } else {
           setSpdList(mockSpdData);
         }
@@ -109,9 +109,12 @@ export default function SpdDashboardPage() {
       try {
         await deleteSpd(id);
         setSpdList(prev => prev.filter(item => item.id !== id));
-      } catch {
-        // Fallback for mock data deletion
-        setSpdList(prev => prev.filter(item => item.id !== id));
+        alert("Data berhasil dihapus!");
+      } catch (err: any) {
+        console.error("Gagal menghapus:", err);
+        const errMsg = err.response?.data?.message || err.message || "Unknown error";
+        const errStatus = err.response?.status || "No Status";
+        alert(`Gagal menghapus data dari server! (Status: ${errStatus}, Pesan: ${errMsg})`);
       }
     }
   };
@@ -170,7 +173,7 @@ export default function SpdDashboardPage() {
           { label: "Draf", val: drafCount, bg: "#f1f5f9", color: "#64748b", border: "none" },
           { label: "Diajukan", val: diajukanCount, bg: "#fef3c7", color: "#d97706", border: "none" },
           { label: "Disetujui", val: disetujuiCount, bg: "#dbeafe", color: "#1d4ed8", border: "none" },
-          { label: "Selesai / LHPD", val: selesaiCount, bg: "#dcfce7", color: "#15803d", border: "none" }
+          { label: "Selesai", val: selesaiCount, bg: "#dcfce7", color: "#15803d", border: "none" }
         ].map((stat, idx) => (
           <div
             key={idx}
@@ -340,21 +343,7 @@ export default function SpdDashboardPage() {
                           >
                             Cetak
                           </button>
-                          <button
-                            onClick={() => router.push(`/spd/laporan/${item.id}`)}
-                            style={{
-                              backgroundColor: "#15803d",
-                              color: "white",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "600"
-                            }}
-                          >
-                            LHPD
-                          </button>
+
                           <button
                             onClick={() => handleDelete(item.id)}
                             style={{
