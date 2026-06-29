@@ -64,7 +64,19 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
   }, [data]);
 
   const handlePrint = () => {
+    const originalTitle = document.title;
+    if (data && data.noSpd) {
+      const sanitizedNoSpd = data.noSpd.replace(/\//g, "_");
+      document.title = `SPD_${sanitizedNoSpd}`;
+    } else if (data && data.nama) {
+      // Jika noSpd tidak ada, fallback ke nama pegawai
+      document.title = `SPD_${data.nama.replace(/\s+/g, "_")}`;
+    }
+    
     window.print();
+    
+    // Kembalikan ke judul asli setelah dialog print ditutup
+    document.title = originalTitle;
   };
 
   if (loading) {
