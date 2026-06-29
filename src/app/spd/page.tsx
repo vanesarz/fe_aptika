@@ -341,21 +341,6 @@ export default function SpdDashboardPage() {
                             Cetak
                           </button>
                           <button
-                            onClick={() => router.push(`/spd/laporan/${item.id}`)}
-                            style={{
-                              backgroundColor: "#15803d",
-                              color: "white",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "600"
-                            }}
-                          >
-                            LHPD
-                          </button>
-                          <button
                             onClick={() => handleDelete(item.id)}
                             style={{
                               backgroundColor: "#fecaca",
