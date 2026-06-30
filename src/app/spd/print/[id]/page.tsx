@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { getSpdById } from "@/services/api";
+import { getSpdById, fromApiSpdItem } from "@/services/api";
 
 type PrintPageProps = {
   params: Promise<{ id: string }>;
@@ -14,37 +14,14 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const mockItems: Record<string, any> = {
-    "1": {
-      pejabatPemberi: "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
-      nama: "Ahmad Subarjo, S.Kom.",
-      nip: "198804122015031002",
-      pangkat: "Penata / IIIc",
-      jabatan: "Pengelola Sistem SPBE",
-      maksud: "Koordinasi integrasi aplikasi Smart Jabar",
-      angkutan: "Kendaraan Dinas",
-      tempatBerangkat: "Bandung",
-      tempatTujuan: "Dinas Kominfo Kabupaten Bekasi",
-      tglMulai: "2026-07-05",
-      tglSelesai: "2026-07-07",
-      durasi: 3,
-      pengikut: [{ nama: "Dani Darmawan", tglLahir: "1994-05-12", keterangan: "Staf Teknis" }],
-      anggaran: 2500000,
-      noSpd: "094/SPD-0182/APTIKA/2026",
-      tingkatBiaya: "Tingkat C",
-      tanggalSpd: "2026-07-02"
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const res = await getSpdById(Number(id));
-        // getSpdById already returns the data payload from the API
-        setData(res || mockItems[id] || mockItems["1"]);
+        setData(fromApiSpdItem(res));
       } catch {
-        setData(mockItems[id] || mockItems["1"]);
+        setData(null);
       } finally {
         setLoading(false);
       }

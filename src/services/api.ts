@@ -2,6 +2,7 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
+  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -37,6 +38,130 @@ export const logout = async () => {
   await api.post("/logout");
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+};
+
+// ─── SPD ────────────────────────────────────────────────
+export const normalizeSpdStatus = (status?: string) => {
+  const normalized = (status || "").toLowerCase();
+
+  switch (normalized) {
+    case "draf":
+    case "draft":
+      return "draft";
+    case "diajukan":
+    case "submitted":
+      return "submitted";
+    case "disetujui":
+    case "approved":
+      return "approved";
+    case "dalam proses":
+    case "in_progress":
+    case "in progress":
+      return "in_progress";
+    case "selesai":
+    case "completed":
+      return "completed";
+    default:
+      return "draft";
+  }
+};
+
+export const fromApiSpdItem = (item: any) => {
+  const source = item?.data && typeof item.data === "object" && !Array.isArray(item.data) ? item.data : item;
+  const status = String(source?.status || "draft");
+  const displayStatus = status === "draft"
+    ? "DRAF"
+    : status === "submitted"
+      ? "DIAJUKAN"
+      : status === "approved"
+        ? "DISETUJUI"
+        : status === "completed"
+          ? "SELESAI"
+          : status === "in_progress"
+            ? "DALAM PROSES"
+            : status.toUpperCase();
+
+  const followers = Array.isArray(source?.followers) ? source.followers : Array.isArray(source?.pengikut) ? source.pengikut : [];
+  const mappedPengikut = followers.map((follower: any) => ({
+    nama: follower?.name || follower?.nama || "",
+    tglLahir: follower?.nip || follower?.tglLahir || "",
+    keterangan: follower?.position || follower?.keterangan || "",
+  }));
+
+  return {
+    id: source?.id,
+    pejabatPemberi: source?.orderer_name || source?.pejabatPemberi || "",
+    nama: source?.employee_name || source?.nama || "",
+    nip: source?.employee_nip || source?.nip || "",
+    pangkat: source?.employee_rank || source?.pangkat || "",
+    jabatan: source?.employee_position || source?.jabatan || "",
+    maksud: source?.purpose || source?.maksud || "",
+    angkutan: source?.transportation || source?.angkutan || "",
+    tempatBerangkat: source?.departure_place || source?.tempatBerangkat || "",
+    tempatTujuan: source?.destination || source?.tempatTujuan || "",
+    tujuan: source?.destination || source?.tempatTujuan || "",
+    tglMulai: source?.start_date || source?.tglMulai || "",
+    tglSelesai: source?.end_date || source?.tglSelesai || "",
+    durasi: source?.durasi || source?.duration || 0,
+    pengikut: mappedPengikut,
+    anggaran: source?.budget_estimate ?? source?.anggaran ?? 0,
+    status: displayStatus,
+    rawStatus: source?.status || "draft",
+    raw: source,
+  };
+};
+
+export const toApiSpdPayload = (payload: any) => ({
+  orderer_name: payload.pejabatPemberi ?? payload.orderer_name ?? "",
+  orderer_nip: payload.ordererNip ?? "",
+  orderer_position: payload.ordererPosition ?? "",
+  employee_name: payload.nama ?? payload.employee_name ?? "",
+  employee_nip: payload.nip ?? payload.employee_nip ?? "",
+  employee_rank: payload.pangkat ?? payload.employee_rank ?? "",
+  employee_position: payload.jabatan ?? payload.employee_position ?? "",
+  purpose: payload.maksud ?? payload.purpose ?? "",
+  transportation: payload.angkutan ?? payload.transportation ?? "",
+  departure_place: payload.tempatBerangkat ?? payload.departure_place ?? "",
+  destination: payload.tempatTujuan ?? payload.destination ?? "",
+  start_date: payload.tglMulai ?? payload.start_date ?? "",
+  end_date: payload.tglSelesai ?? payload.end_date ?? "",
+  budget_estimate: Number(payload.anggaran ?? payload.budget_estimate ?? 0),
+  followers: (payload.pengikut ?? payload.followers ?? []).map((follower: any) => ({
+    name: follower?.name || follower?.nama || "",
+    nip: follower?.nip || follower?.tglLahir || "",
+    position: follower?.position || follower?.keterangan || "",
+  })),
+  status: normalizeSpdStatus(payload.status),
+});
+
+export const getSpdList = async (params?: { search?: string; status?: string }) => {
+  const res = await api.get("/spd", { params });
+  return res.data;
+};
+
+export const getSpdById = async (id: number) => {
+  const res = await api.get(`/spd/${id}`);
+  return res.data;
+};
+
+export const createSpd = async (payload: any) => {
+  const res = await api.post("/spd", toApiSpdPayload(payload));
+  return res.data;
+};
+
+export const updateSpd = async (id: number, payload: any) => {
+  const res = await api.put(`/spd/${id}`, toApiSpdPayload(payload));
+  return res.data;
+};
+
+export const deleteSpd = async (id: number) => {
+  const res = await api.delete(`/spd/${id}`);
+  return res.data;
+};
+
+export const getSpdStats = async () => {
+  const res = await api.get("/spd/stats");
+  return res.data;
 };
 
 // ─── REPORTS ─────────────────────────────────────────────

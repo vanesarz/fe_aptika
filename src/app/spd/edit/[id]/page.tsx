@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { getSpdById, updateSpd } from "@/services/api";
+import { getSpdById, updateSpd, fromApiSpdItem } from "@/services/api";
 
 type EditPageProps = {
   params: Promise<{ id: string }>;
@@ -37,91 +37,46 @@ export default function SpdEditPage({ params }: EditPageProps) {
   const [uangTransport, setUangTransport] = useState(0);
   const [uangHotel, setUangHotel] = useState(0);
 
-  const mockItems: Record<string, any> = {
-    "1": {
-      pejabatPemberi: "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
-      nama: "Ahmad Subarjo, S.Kom.",
-      nip: "198804122015031002",
-      pangkat: "Penata / IIIc",
-      jabatan: "Pengelola Sistem SPBE",
-      maksud: "Koordinasi integrasi aplikasi Smart Jabar",
-      angkutan: "Kendaraan Dinas",
-      tempatBerangkat: "Bandung",
-      tempatTujuan: "Dinas Kominfo Kabupaten Bekasi",
-      tglMulai: "2026-07-05",
-      tglSelesai: "2026-07-07",
-      pengikut: [{ nama: "Dani Darmawan", tglLahir: "1994-05-12", keterangan: "Staf Teknis" }],
-      uangHarian: 1000000,
-      uangTransport: 700000,
-      uangHotel: 800000,
-      status: "DISETUJUI"
-    },
-    "2": {
-      pejabatPemberi: "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
-      nama: "Dewi Lestari, M.T.",
-      nip: "199108242018012003",
-      pangkat: "Penata Muda Tk. I / IIIb",
-      jabatan: "Analisi Data Spasial",
-      maksud: "Rapat koordinasi rekayasa data spasial Jabar",
-      angkutan: "Kendaraan Darat Lainnya",
-      tempatBerangkat: "Bandung",
-      tempatTujuan: "Bappeda Provinsi Jawa Barat",
-      tglMulai: "2026-07-12",
-      tglSelesai: "2026-07-12",
-      pengikut: [],
-      uangHarian: 300000,
-      uangTransport: 500000,
-      uangHotel: 0,
-      status: "DRAF"
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const res = await getSpdById(Number(id));
-        // Dukung response langsung (array/object) maupun nested di .data
-        const raw = res?.data ?? res;
-        const data = raw || mockItems[id] || mockItems["1"];
+        const data = fromApiSpdItem(res);
 
-        setNoSpd(data.noSpd ?? data.no_spd ?? "");
-        setPejabatPemberi(
-          data.pejabatPemberi ?? data.pejabat_pemberi ?? 
-          "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat"
-        );
-        setNamaPegawai(data.nama ?? "");
-        setNipPegawai(data.nip ?? "");
-        setPangkatPegawai(data.pangkat ?? "");
-        setJabatanPegawai(data.jabatan ?? "");
-        setMaksudPerjalanan(data.maksud ?? "");
-        setAngkutan(data.angkutan ?? "Kendaraan Dinas");
-        // Backend bisa simpan sebagai tempatBerangkat atau asal
-        setTempatBerangkat(data.tempatBerangkat ?? data.asal ?? "Bandung");
-        // Backend bisa simpan sebagai tempatTujuan atau tujuan
-        setTempatTujuan(data.tempatTujuan ?? data.tujuan ?? "");
-        setTglMulai(data.tglMulai ?? data.tgl_mulai ?? "");
-        setTglSelesai(data.tglSelesai ?? data.tgl_selesai ?? "");
+        setPejabatPemberi(data.pejabatPemberi || "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
+        setNamaPegawai(data.nama);
+        setNipPegawai(data.nip);
+        setPangkatPegawai(data.pangkat || "");
+        setJabatanPegawai(data.jabatan || "");
+        setMaksudPerjalanan(data.maksud);
+        setAngkutan(data.angkutan || "Kendaraan Dinas");
+        setTempatBerangkat(data.tempatBerangkat || "Bandung");
+        setTempatTujuan(data.tempatTujuan);
+        setTglMulai(data.tglMulai);
+        setTglSelesai(data.tglSelesai);
+        setPengikut(data.pengikut || []);
 
-        // Pengikut: bisa berupa JSON string atau array
-        let pengikutData = data.pengikut ?? [];
-        if (typeof pengikutData === "string") {
-          try { pengikutData = JSON.parse(pengikutData); } catch { pengikutData = []; }
-        }
-        setPengikut(Array.isArray(pengikutData) ? pengikutData : []);
-
-        // Anggaran: bisa tersimpan terpisah atau sebagai total
-        const totalAnggaran = Number(data.anggaran ?? 0);
-        setUangHarian(Number(data.uangHarian ?? data.uang_harian ?? (totalAnggaran > 0 ? Math.round(totalAnggaran / 3) : 0)));
-        setUangTransport(Number(data.uangTransport ?? data.uang_transport ?? (totalAnggaran > 0 ? Math.round(totalAnggaran / 3) : 0)));
-        setUangHotel(Number(data.uangHotel ?? data.uang_hotel ?? (totalAnggaran > 0 ? Math.round(totalAnggaran / 3) : 0)));
-      } catch (err) {
-        console.error("Gagal fetch SPD:", err);
-        // Tidak pakai mock — biarkan form kosong agar user tahu ada error
+        const budgetSplit = Number(data.anggaran || 0) / 3;
+        setUangHarian(budgetSplit || 0);
+        setUangTransport(budgetSplit || 0);
+        setUangHotel(budgetSplit || 0);
+      } catch {
+        setPejabatPemberi("Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
         setNamaPegawai("");
         setNipPegawai("");
-        setTempatTujuan("");
+        setPangkatPegawai("");
+        setJabatanPegawai("");
         setMaksudPerjalanan("");
+        setAngkutan("Kendaraan Dinas");
+        setTempatBerangkat("Bandung");
+        setTempatTujuan("");
+        setTglMulai("");
+        setTglSelesai("");
+        setPengikut([]);
+        setUangHarian(0);
+        setUangTransport(0);
+        setUangHotel(0);
       } finally {
         setLoading(false);
       }

@@ -2,119 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, Legend
-} from "recharts";
-import { getSpdList, deleteSpd } from "@/services/api";
-
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGS", "SEP", "OKT", "NOV", "DES"];
+import { getSpdList, deleteSpd, fromApiSpdItem } from "@/services/api";
 
 export default function SpdDashboardPage() {
   const router = useRouter();
   const [spdList, setSpdList] = useState<any[]>([]);
-  const [filteredList, setFilteredList] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
-
-  // Mock data for fallback
-  const mockSpdData = [
-    {
-      id: 1,
-      nama: "Ahmad Subarjo, S.Kom.",
-      nip: "198804122015031002",
-      tujuan: "Dinas Kominfo Kabupaten Bekasi",
-      maksud: "Koordinasi integrasi aplikasi Smart Jabar",
-      tglMulai: "2026-07-05",
-      tglSelesai: "2026-07-07",
-      status: "DISETUJUI",
-      anggaran: 2500000
-    },
-    {
-      id: 2,
-      nama: "Dewi Lestari, M.T.",
-      nip: "199108242018012003",
-      tujuan: "Bappeda Provinsi Jawa Barat",
-      maksud: "Rapat koordinasi rekayasa data spasial Jabar",
-      tglMulai: "2026-07-12",
-      tglSelesai: "2026-07-12",
-      status: "DRAF",
-      anggaran: 800000
-    },
-    {
-      id: 3,
-      nama: "Hendra Gunawan, S.E.",
-      nip: "198501152010041001",
-      tujuan: "Kementerian Kominfo RI, Jakarta",
-      maksud: "Konsultasi regulasi Interoperabilitas SPBE",
-      tglMulai: "2026-06-20",
-      tglSelesai: "2026-06-23",
-      status: "SELESAI",
-      anggaran: 6200000
-    },
-    {
-      id: 4,
-      nama: "Siti Rahma, S.IP.",
-      nip: "199402182020122005",
-      tujuan: "Diskominfo Kota Bandung",
-      maksud: "Monitoring penggunaan aplikasi Sada Jabar",
-      tglMulai: "2026-07-15",
-      tglSelesai: "2026-07-16",
-      status: "DIAJUKAN",
-      anggaran: 1200000
-    }
-  ];
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const res = await getSpdList();
-        if (Array.isArray(res)) {
-          setSpdList(res.length > 0 ? res : []); // Atur ke array kosong jika tidak ada data dari backend (bukan pakai mock)
+        if (res?.data) {
+          setSpdList(res.data);
         } else {
           setSpdList(mockSpdData);
         }
       } catch {
-        setSpdList(mockSpdData);
+        setSpdList([]);
+        setErrorMessage("Gagal memuat data SPD dari server.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    let result = spdList;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(item => 
-        item.nama.toLowerCase().includes(term) ||
-        item.nip.includes(term) ||
-        item.tujuan.toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter !== "ALL") {
-      result = result.filter(item => item.status === statusFilter);
-    }
-
-    setFilteredList(result);
-  }, [searchTerm, statusFilter, spdList]);
+  }, [searchTerm]);
 
   const handleDelete = async (id: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus data usulan SPD ini?")) {
       try {
         await deleteSpd(id);
         setSpdList(prev => prev.filter(item => item.id !== id));
-        alert("Data berhasil dihapus!");
-      } catch (err: any) {
-        console.error("Gagal menghapus:", err);
-        const errMsg = err.response?.data?.message || err.message || "Unknown error";
-        const errStatus = err.response?.status || "No Status";
-        alert(`Gagal menghapus data dari server! (Status: ${errStatus}, Pesan: ${errMsg})`);
+      } catch {
+        // Fallback for mock data deletion
+        setSpdList(prev => prev.filter(item => item.id !== id));
       }
     }
   };
@@ -173,7 +98,7 @@ export default function SpdDashboardPage() {
           { label: "Draf", val: drafCount, bg: "#f1f5f9", color: "#64748b", border: "none" },
           { label: "Diajukan", val: diajukanCount, bg: "#fef3c7", color: "#d97706", border: "none" },
           { label: "Disetujui", val: disetujuiCount, bg: "#dbeafe", color: "#1d4ed8", border: "none" },
-          { label: "Selesai", val: selesaiCount, bg: "#dcfce7", color: "#15803d", border: "none" }
+          { label: "Selesai / LHPD", val: selesaiCount, bg: "#dcfce7", color: "#15803d", border: "none" }
         ].map((stat, idx) => (
           <div
             key={idx}
@@ -209,7 +134,7 @@ export default function SpdDashboardPage() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      ) : null}
 
       {/* Table Section */}
       <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
@@ -231,25 +156,6 @@ export default function SpdDashboardPage() {
                 outline: "none"
               }}
             />
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{
-                border: "1px solid #cbd5e1",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                outline: "none",
-                backgroundColor: "white"
-              }}
-            >
-              <option value="ALL">Semua Status</option>
-              <option value="DRAF">Draf</option>
-              <option value="DIAJUKAN">Diajukan</option>
-              <option value="DISETUJUI">Disetujui</option>
-              <option value="SELESAI">Selesai</option>
-            </select>
           </div>
         </div>
 
@@ -258,93 +164,90 @@ export default function SpdDashboardPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>No</th>
-                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>Pegawai</th>
-                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>Maksud Perjalanan</th>
-                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>Tujuan</th>
-                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>Tanggal</th>
-                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>Status</th>
-                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600", textAlign: "center" }}>Aksi</th>
+                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>NO</th>
+                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>ID PERJALANAN</th>
+                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>TUJUAN</th>
+                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>DESKRIPSI</th>
+                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600" }}>STATUS</th>
+                <th style={{ padding: "12px 8px", color: "#475569", fontWeight: "600", textAlign: "center" }}>AKSI</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "24px", color: "#64748b" }}>Loading data...</td>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "24px", color: "#64748b" }}>Loading data...</td>
                 </tr>
-              ) : filteredList.length === 0 ? (
+              ) : spdList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "24px", color: "#64748b" }}>Tidak ada data SPD ditemukan.</td>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "24px", color: "#64748b" }}>Tidak ada data SPD ditemukan.</td>
                 </tr>
               ) : (
-                filteredList.map((item, index) => {
-                  let badgeBg = "#f1f5f9";
-                  let badgeColor = "#64748b";
-                  if (item.status === "DIAJUKAN") { badgeBg = "#fef3c7"; badgeColor = "#d97706"; }
-                  else if (item.status === "DISETUJUI") { badgeBg = "#dbeafe"; badgeColor = "#1d4ed8"; }
-                  else if (item.status === "SELESAI") { badgeBg = "#dcfce7"; badgeColor = "#15803d"; }
-
+                spdList.map((item, index) => {
                   return (
                     <tr key={item.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "12px 8px", color: "#64748b" }}>{index + 1}</td>
-                      <td style={{ padding: "12px 8px" }}>
-                        <div style={{ fontWeight: "600", color: "#0f2540" }}>{item.nama}</div>
-                        <div style={{ fontSize: "11px", color: "#64748b" }}>NIP. {item.nip}</div>
-                      </td>
-                      <td style={{ padding: "12px 8px", color: "#334155", maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "12px 8px", color: "#0f2540", fontWeight: "600" }}>{item.id}</td>
+                      <td style={{ padding: "12px 8px", color: "#334155" }}>{item.tujuan}</td>
+                      <td style={{ padding: "12px 8px", color: "#334155", maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {item.maksud}
                       </td>
-                      <td style={{ padding: "12px 8px", color: "#334155" }}>{item.tujuan}</td>
-                      <td style={{ padding: "12px 8px", color: "#475569" }}>
-                        <div>{item.tglMulai}</div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>s/d {item.tglSelesai}</div>
-                      </td>
-                      <td style={{ padding: "12px 8px" }}>
-                        <span style={{
-                          backgroundColor: badgeBg,
-                          color: badgeColor,
-                          padding: "4px 8px",
-                          borderRadius: "9999px",
-                          fontSize: "12px",
-                          fontWeight: "700"
-                        }}>
-                          {item.status}
-                        </span>
+                      <td style={{textAlign:"center"}}>
+                        <input
+                        type="checkbox"
+                        checked={item.status==="SELESAI"}
+                        readOnly
+                        style={{
+                            width:18,
+                            height:18,
+                            accentColor:"#6d28d9"
+                        }}
+                        />
                       </td>
                       <td style={{ padding: "12px 8px" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                           <button
-                            onClick={() => router.push(`/spd/edit/${item.id}`)}
+                            onClick={() => router.push(`/spd/view/${item.id}`)}
+                            title="View"
                             style={{
                               backgroundColor: "transparent",
-                              border: "1px solid #cbd5e1",
+                              border: "none",
+                              color: "#1d4ed8",
+                              padding: "4px 8px",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center"
+                            }}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => router.push(`/spd/edit/${item.id}`)}
+                            title="Edit"
+                            style={{
+                              backgroundColor: "transparent",
+                              border: "none",
                               color: "#475569",
                               padding: "4px 8px",
                               borderRadius: "6px",
                               cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "600"
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center"
                             }}
                           >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => router.push(`/spd/print/${item.id}`)}
-                            style={{
-                              backgroundColor: "#0f2540",
-                              color: "white",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "600"
-                            }}
-                          >
-                            Cetak
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
                           </button>
                           <button
                             onClick={() => handleDelete(item.id)}
+                            title="Delete"
                             style={{
                               backgroundColor: "#fecaca",
                               color: "#dc2626",
@@ -352,11 +255,17 @@ export default function SpdDashboardPage() {
                               borderRadius: "6px",
                               border: "none",
                               cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "600"
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center"
                             }}
                           >
-                            Hapus
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              <line x1="10" y1="11" x2="10" y2="17"></line>
+                              <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
                           </button>
                         </div>
                       </td>

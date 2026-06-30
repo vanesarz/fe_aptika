@@ -7,12 +7,12 @@ import { logout } from "@/services/api";
 // ── Key harus sama persis dengan nama folder di src/app/
 const TEAMS = [
   { name: "Integrasi Interoperabilitas", key: "integrasiinteroperabilitas" },
+  { name: "Surat Perjalanan Dinas (SPD)", key: "spd" },
   { name: "Pengelolaan Aplikasi",        key: "pengelolaanaplikasi" },
   { name: "Rekayasa Aplikasi",           key: "rekayasaaplikasi" },
   { name: "Sidebar Jabar",               key: "sidebarjabar" },
   { name: "Smart Jabar",                 key: "smartjabar" },
   { name: "Sada Jabar",                   key: "sadajabar" },
-  { name: "Surat Perjalanan Dinas (SPD)", key: "spd" },
 ];
 
 export default function Sidebar() {
