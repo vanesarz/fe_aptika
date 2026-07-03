@@ -2,6 +2,12 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
+import { getSpdById, fromApiSpdItem, getDetailPerjalananById, fromApiDetailPerjalanan } from "@/services/api";
+
+type PrintPageProps = {
+  params: Promise<{ id: string }>;
+};
+
 const formatDateIndonesian = (dateStr: string) => {
   if (!dateStr) return "";
   try {
