@@ -92,30 +92,12 @@ export default function SpdDashboardPage() {
           if (res2?.data && res2.data.length > 0) {
             setSpdList(res2.data.map(fromApiSpdItem));
           } else {
-            let data = mockSpdData;
-            if (searchTerm) {
-              const term = searchTerm.toLowerCase();
-              data = data.filter(item =>
-                item.nama.toLowerCase().includes(term) ||
-                item.nip.includes(term) ||
-                item.tujuan.toLowerCase().includes(term)
-              );
-            }
-            setSpdList(data.map(fromApiSpdItem));
+            setSpdList([]);
           }
         }
-      } catch {
-        // Double fallback ke mock data jika semua API gagal
-        let data = mockSpdData;
-        if (searchTerm) {
-          const term = searchTerm.toLowerCase();
-          data = data.filter(item =>
-            item.nama.toLowerCase().includes(term) ||
-            item.nip.includes(term) ||
-            item.tujuan.toLowerCase().includes(term)
-          );
-        }
-        setSpdList(data.map(fromApiSpdItem));
+      } catch (err) {
+        console.error("Gagal memuat data dari API:", err);
+        setSpdList([]);
       } finally {
         setLoading(false);
       }
