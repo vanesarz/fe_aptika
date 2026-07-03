@@ -215,6 +215,43 @@ export const getDetailPerjalananById = async (id: number) => {
   return res.data;
 };
 
+export const fromApiDetailPerjalanan = (item: any) => {
+  const source =
+    item?.data && typeof item.data === "object" && !Array.isArray(item.data)
+      ? item.data
+      : item;
+
+  return {
+    id: source?.id,
+    travelCode: source?.travel_code || source?.travelCode || "",
+    tujuan: source?.tujuan || source?.destination || "",
+    deskripsi: source?.deskripsi || source?.description || "",
+    tempatBerangkat:
+      source?.tempat_berangkat ||
+      source?.departure_place ||
+      source?.tempatBerangkat ||
+      "",
+    tglMulai:
+      source?.tanggal_mulai ||
+      source?.start_date ||
+      source?.tglMulai ||
+      "",
+    tglSelesai:
+      source?.tanggal_selesai ||
+      source?.end_date ||
+      source?.tglSelesai ||
+      "",
+    status:
+      source?.status === "selesai"
+        ? "SELESAI"
+        : source?.status === "belum_selesai"
+        ? "BELUM SELESAI"
+        : (source?.status || "").toUpperCase(),
+    rawStatus: source?.status,
+    raw: source,
+  };
+};
+
 export const createDetailPerjalanan = async (payload: any) => {
   const res = await api.post("/spd/detail-perjalanan", payload);
   return res.data;
