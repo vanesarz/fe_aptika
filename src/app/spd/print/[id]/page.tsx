@@ -27,6 +27,20 @@ const formatDateIndonesian = (dateStr: string) => {
   }
 };
 
+const calculateDurasi = (tglMulai: string, tglSelesai: string): number => {
+  if (!tglMulai || !tglSelesai) return 1;
+  try {
+    const start = new Date(tglMulai.includes("T") ? tglMulai.split("T")[0] : tglMulai);
+    const end = new Date(tglSelesai.includes("T") ? tglSelesai.split("T")[0] : tglSelesai);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+    const diffMs = end.getTime() - start.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays > 0 ? diffDays : 1;
+  } catch {
+    return 1;
+  }
+};
+
 export default function SpdPrintPage({ params }: PrintPageProps) {
   const router = useRouter();
   const { id } = use(params);
@@ -594,7 +608,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                       c. Tanggal harus kembali/tiba
                     </td>
                     <td>
-                      a. {data?.durasi || 1} Hari<br />
+                      a. {calculateDurasi(data?.tglMulai, data?.tglSelesai)} Hari<br />
                       b. {formatDateIndonesian(data?.tglMulai)}<br />
                       c. {formatDateIndonesian(data?.tglSelesai)}
                     </td>
