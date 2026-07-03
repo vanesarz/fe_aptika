@@ -503,207 +503,248 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
       ) : (
         /* ======================== SURAT PERJALANAN DINAS (SPD) ======================== */
         <>
-          {/* PAGE 1: SURAT PERJALANAN DINAS (SPD) FRONT */}
-          <div className="print-container-spd">
-            {/* Kop Dinas */}
-            <div className="kop-surat-spd">
-              <img 
-                src="/logo-jabar.png" 
-                alt="Logo Jabar" 
-                style={{ width: "75px", height: "auto", marginRight: "15px" }}
-                onError={(e) => { 
-                  const t = e.target as HTMLImageElement;
-                  if (!t.dataset.fallback) {
-                    t.dataset.fallback = "1";
-                    t.src = "https://upload.wikimedia.org/wikipedia/commons/0/07/West_Java_coa.png";
-                  }
-                }} 
-              />
-              <div className="kop-teks-spd">
-                <div style={{ fontSize: "16px", fontWeight: "bold" }}>PEMERINTAH PROVINSI JAWA BARAT</div>
-                <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "0.5px" }}>DINAS KOMUNIKASI DAN INFORMATIKA</div>
-                <div style={{ fontSize: "11px", fontStyle: "italic" }}>Jalan Taman Sari No. 55 Telepon (022) 2502898 Fax (022) 2511605</div>
-                <div style={{ fontSize: "12px", fontWeight: "bold" }}>BANDUNG - 40132</div>
-              </div>
-            </div>
-
-            {/* Title */}
-            <div style={{ textAlign: "center", marginBottom: "15px" }}>
-              <div style={{ fontSize: "15px", fontWeight: "bold", textDecoration: "underline" }}>SURAT PERJALANAN DINAS (SPD)</div>
-              <div style={{ fontSize: "13px" }}>Nomor: {data?.noSpd || "094/SPD-0182/APTIKA/2026"}</div>
-            </div>
-
-            {/* SPD Grid Table */}
-            <table className="table-spd">
-              <tbody>
-                <tr>
-                  <td style={{ width: "4%", textAlign: "center" }}>1.</td>
-                  <td style={{ width: "41%" }}>Pejabat Pembuat Komitmen</td>
-                  <td style={{ width: "55%" }}>{data?.pejabatPemberi || "Kepala Bidang APTIKA Diskominfo Jabar"}</td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>2.</td>
-                  <td>Nama / NIP Pegawai yang diperintah</td>
-                  <td>
-                    <strong>{data?.nama}</strong><br />
-                    NIP. {data?.nip}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>3.</td>
-                  <td>
-                    a. Pangkat dan Golongan<br />
-                    b. Jabatan / Instansi<br />
-                    c. Tingkat Biaya Perjalanan Dinas
-                  </td>
-                  <td>
-                    a. {data?.pangkat || "-"}<br />
-                    b. {data?.jabatan || "-"}<br />
-                    c. {data?.tingkatBiaya || "Tingkat C"}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>4.</td>
-                  <td>Maksud Perjalanan Dinas</td>
-                  <td>{data?.maksud}</td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>5.</td>
-                  <td>Alat angkutan yang dipergunakan</td>
-                  <td>{data?.angkutan || "Kendaraan Dinas"}</td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>6.</td>
-                  <td>
-                    a. Tempat berangkat<br />
-                    b. Tempat tujuan
-                  </td>
-                  <td>
-                    a. {data?.tempatBerangkat || "Bandung"}<br />
-                    b. {data?.tempatTujuan}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>7.</td>
-                  <td>
-                    a. Lamanya perjalanan dinas<br />
-                    b. Tanggal berangkat<br />
-                    c. Tanggal harus kembali/tiba
-                  </td>
-                  <td>
-                    a. {data?.durasi || 1} Hari<br />
-                    b. {formatDateIndonesian(data?.tglMulai)}<br />
-                    c. {formatDateIndonesian(data?.tglSelesai)}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>8.</td>
-                  <td>Pengikut: Nama / Tanggal Lahir / Keterangan</td>
-                  <td>
-                    {data?.pengikut && data.pengikut.length > 0 ? (
-                      <ol style={{ margin: 0, paddingLeft: "15px" }}>
-                        {data.pengikut.map((p: any, i: number) => (
-                          <li key={i}>
-                            {p.nama} (Lahir: {p.tglLahir || "-"}) - {p.keterangan || "-"}
-                          </li>
-                        ))}
-                      </ol>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>9.</td>
-                  <td>
-                    Pembebanan Anggaran<br />
-                    a. Instansi<br />
-                    b. Mata Anggaran / Akun
-                  </td>
-                  <td>
-                    <br />
-                    a. Dinas Komunikasi dan Informatika Jabar<br />
-                    b. APBD Provinsi Jawa Barat TA 2026
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>10.</td>
-                  <td>Keterangan lain-lain</td>
-                  <td>Surat tugas terlampir</td>
-                </tr>
-              </tbody>
-            </table>
-
-            {/* Footer Signatures */}
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "30px", fontSize: "13px" }}>
-              <div></div>
-              <div style={{ width: "250px" }}>
-                <div>Dikeluarkan di: Bandung</div>
-                <div>Pada tanggal: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</div>
-                <div style={{ borderBottom: "1px solid black", margin: "10px 0" }}></div>
-                <div style={{ fontWeight: "bold" }}>Kepala Bidang APTIKA,</div>
-                <div style={{ height: "65px" }}></div>
-                <div style={{ fontWeight: "bold", textDecoration: "underline" }}>{data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T."}</div>
-                <div>NIP. {data?.raw?.orderer_nip || "197412081999031002"}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* PAGE BREAK FOR PRINT */}
-          <div className="page-break"></div>
-
-          {/* PAGE 2: VISUM / LEMBAR SPD BELAKANG */}
-          <div className="print-container-spd">
-            <h3 style={{ fontSize: "14px", fontWeight: "bold", textAlign: "center", textDecoration: "underline", marginBottom: "15px" }}>
-              LEMBAR VISUM / CATATAN PERJALANAN
-            </h3>
+          {/* PAGE 1: SURAT PERJALANAN DINAS (SPD) FRONT & VISUM (TWO COLUMNS) */}
+          <div className="print-container-spd" style={{ display: "flex", gap: "20px" }}>
             
-            <table className="table-visum">
-              <tbody>
-                <tr>
-                  <td>
-                    <strong>I. Berangkat dari:</strong> Bandung<br />
-                    <strong>Ke:</strong> {data?.tempatTujuan}<br />
-                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglMulai)}<br /><br />
-                    <div style={{ textAlign: "center", fontSize: "11px", color: "#64748b", borderTop: "1px dashed black", paddingTop: "5px", marginTop: "10px" }}>
-                      Tanda Tangan Pejabat Berwenang
-                    </div>
-                  </td>
-                  <td>
-                    <strong>II. Tiba di:</strong> {data?.tempatTujuan}<br />
-                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglMulai)}<br />
-                    <div style={{ height: "40px" }}></div>
-                    <div style={{ borderTop: "1px solid black", margin: "5px 0" }}></div>
-                    <strong>(Pejabat di Lokasi Tujuan)</strong>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <strong>III. Berangkat dari:</strong> {data?.tempatTujuan}<br />
-                    <strong>Ke:</strong> Bandung<br />
-                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br /><br />
-                    <div style={{ textAlign: "center", fontSize: "11px", color: "#64748b", borderTop: "1px dashed black", paddingTop: "5px", marginTop: "10px" }}>
-                      Tanda Tangan Pejabat Berwenang
-                    </div>
-                  </td>
-                  <td>
-                    <strong>IV. Tiba di:</strong> Bandung<br />
-                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br />
-                    <div style={{ height: "40px" }}></div>
-                    <div style={{ borderTop: "1px solid black", margin: "5px 0" }}></div>
-                    <strong>Kabid APTIKA Diskominfo Jabar</strong>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            {/* LEFT COLUMN: SPD FRONT */}
+            <div style={{ flex: "1 1 50%", borderRight: "1px dashed #cbd5e1", paddingRight: "15px", display: "flex", flexDirection: "column" }}>
+              {/* Kop Dinas */}
+              <div className="kop-surat-spd">
+                <img 
+                  src="/logo-jabar.png" 
+                  alt="Logo Jabar" 
+                  style={{ width: "60px", height: "auto", marginRight: "10px" }}
+                  onError={(e) => { 
+                    const t = e.target as HTMLImageElement;
+                    if (!t.dataset.fallback) {
+                      t.dataset.fallback = "1";
+                      t.src = "https://upload.wikimedia.org/wikipedia/commons/0/07/West_Java_coa.png";
+                    }
+                  }} 
+                />
+                <div className="kop-teks-spd">
+                  <div style={{ fontSize: "14px", fontWeight: "bold" }}>PEMERINTAH PROVINSI JAWA BARAT</div>
+                  <div style={{ fontSize: "16px", fontWeight: "bold", letterSpacing: "0.5px" }}>DINAS KOMUNIKASI DAN INFORMATIKA</div>
+                  <div style={{ fontSize: "10px", fontStyle: "italic" }}>Jalan Taman Sari No. 55 Telepon (022) 2502898 Fax (022) 2511605</div>
+                  <div style={{ fontSize: "10px", fontWeight: "bold" }}>BANDUNG - 40132</div>
+                </div>
+              </div>
 
-            {/* Visum Notes */}
-            <div style={{ marginTop: "30px", fontSize: "11px" }}>
-              <strong>Catatan Penting:</strong>
-              <ol style={{ margin: 0, paddingLeft: "15px" }}>
-                <li>Setiap tempat persinggahan/kunjungan dinas wajib meminta visum (stempel & tanda tangan) pejabat setempat.</li>
-                <li>Lembar ini dilampirkan bersama Laporan Hasil Perjalanan Dinas (LHPD) maksimal 5 hari setelah kembali.</li>
-              </ol>
+              {/* Title */}
+              <div style={{ textAlign: "center", marginBottom: "10px" }}>
+                <div style={{ fontSize: "13px", fontWeight: "bold", textDecoration: "underline" }}>SURAT PERJALANAN DINAS (SPD)</div>
+                <div style={{ fontSize: "11px" }}>Nomor: {data?.noSpd || "094/SPD-0182/APTIKA/2026"}</div>
+              </div>
+
+              {/* SPD Grid Table */}
+              <table className="table-spd" style={{ fontSize: "11px", marginTop: "10px" }}>
+                <tbody>
+                  <tr>
+                    <td style={{ width: "4%", textAlign: "center" }}>1.</td>
+                    <td style={{ width: "41%" }}>Pejabat Pembuat Komitmen</td>
+                    <td style={{ width: "55%" }}>{data?.pejabatPemberi || "Kepala Bidang APTIKA Diskominfo Jabar"}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>2.</td>
+                    <td>Nama / NIP Pegawai yang diperintah</td>
+                    <td>
+                      <strong>{data?.nama}</strong><br />
+                      NIP. {data?.nip}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>3.</td>
+                    <td>
+                      a. Pangkat dan Golongan<br />
+                      b. Jabatan / Instansi<br />
+                      c. Tingkat Biaya Perjalanan Dinas
+                    </td>
+                    <td>
+                      a. {data?.pangkat || "-"}<br />
+                      b. {data?.jabatan || "-"}<br />
+                      c. {data?.tingkatBiaya || "Tingkat C"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>4.</td>
+                    <td>Maksud Perjalanan Dinas</td>
+                    <td>{data?.maksud}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>5.</td>
+                    <td>Alat angkutan yang dipergunakan</td>
+                    <td>{data?.angkutan || "Kendaraan Dinas"}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>6.</td>
+                    <td>
+                      a. Tempat berangkat<br />
+                      b. Tempat tujuan
+                    </td>
+                    <td>
+                      a. {data?.tempatBerangkat || "Bandung"}<br />
+                      b. {data?.tempatTujuan}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>7.</td>
+                    <td>
+                      a. Lamanya perjalanan dinas<br />
+                      b. Tanggal berangkat<br />
+                      c. Tanggal harus kembali/tiba
+                    </td>
+                    <td>
+                      a. {data?.durasi || 1} Hari<br />
+                      b. {formatDateIndonesian(data?.tglMulai)}<br />
+                      c. {formatDateIndonesian(data?.tglSelesai)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>8.</td>
+                    <td>Pengikut: Nama / Tanggal Lahir / Keterangan</td>
+                    <td>
+                      {data?.pengikut && data.pengikut.length > 0 ? (
+                        <ol style={{ margin: 0, paddingLeft: "15px" }}>
+                          {data.pengikut.map((p: any, i: number) => (
+                            <li key={i}>
+                              {p.nama} (Lahir: {p.tglLahir || "-"}) - {p.keterangan || "-"}
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>9.</td>
+                    <td>
+                      Pembebanan Anggaran<br />
+                      a. Instansi<br />
+                      b. Mata Anggaran / Akun
+                    </td>
+                    <td>
+                      <br />
+                      a. Dinas Komunikasi dan Informatika Jabar<br />
+                      b. APBD Provinsi Jawa Barat TA 2026
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "center" }}>10.</td>
+                    <td>Keterangan lain-lain</td>
+                    <td>Surat tugas terlampir</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Footer Signatures */}
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px", fontSize: "11px" }}>
+                <div></div>
+                <div style={{ width: "200px" }}>
+                  <div>Dikeluarkan di: Bandung</div>
+                  <div>Pada tanggal: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</div>
+                  <div style={{ borderBottom: "1px solid black", margin: "5px 0" }}></div>
+                  <div style={{ fontWeight: "bold" }}>Kepala Bidang APTIKA,</div>
+                  <div style={{ height: "50px" }}></div>
+                  <div style={{ fontWeight: "bold", textDecoration: "underline" }}>{data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T."}</div>
+                  <div>NIP. {data?.raw?.orderer_nip || "197412081999031002"}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: VISUM */}
+            <div style={{ flex: "1 1 50%", paddingLeft: "5px", display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", width: "100%", borderBottom: "1px solid black" }}>
+                <div style={{ width: "50%", padding: "5px", fontSize: "11px" }}>
+                  <strong>I.</strong><br/>
+                </div>
+                <div style={{ width: "50%", padding: "5px", fontSize: "11px", borderLeft: "1px solid black" }}>
+                  Berangkat dari : (Tempat Kedudukan) Bandung<br/>
+                  Ke : {data?.tempatTujuan}<br/>
+                  Pada Tanggal : {formatDateIndonesian(data?.tglMulai)}
+                </div>
+              </div>
+
+              <table className="table-visum" style={{ marginTop: "0", fontSize: "11px" }}>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: "8px", height: "80px", borderTop: "none" }}>
+                      <strong>II. Tiba di:</strong> {data?.tempatTujuan}<br />
+                      <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglMulai)}<br />
+                      <strong>Kepala:</strong>
+                      <div style={{ height: "20px" }}></div>
+                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                    </td>
+                    <td style={{ padding: "8px", height: "80px", borderTop: "none" }}>
+                      <strong>Berangkat dari:</strong> {data?.tempatTujuan}<br />
+                      <strong>Ke:</strong> Bandung<br />
+                      <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br />
+                      <strong>Kepala:</strong>
+                      <div style={{ height: "20px" }}></div>
+                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "8px", height: "80px" }}>
+                      <strong>III. Tiba di:</strong><br />
+                      <strong>Pada tanggal:</strong><br />
+                      <strong>Kepala:</strong>
+                      <div style={{ height: "20px" }}></div>
+                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                    </td>
+                    <td style={{ padding: "8px", height: "80px" }}>
+                      <strong>Berangkat dari:</strong><br />
+                      <strong>Ke:</strong><br />
+                      <strong>Pada tanggal:</strong><br />
+                      <strong>Kepala:</strong>
+                      <div style={{ height: "20px" }}></div>
+                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "8px", height: "80px" }}>
+                      <strong>IV. Tiba di:</strong><br />
+                      <strong>Pada tanggal:</strong><br />
+                      <strong>Kepala:</strong>
+                      <div style={{ height: "20px" }}></div>
+                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                    </td>
+                    <td style={{ padding: "8px", height: "80px" }}>
+                      <strong>Berangkat dari:</strong><br />
+                      <strong>Ke:</strong><br />
+                      <strong>Pada tanggal:</strong><br />
+                      <strong>Kepala:</strong>
+                      <div style={{ height: "20px" }}></div>
+                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2} style={{ padding: "8px", height: "auto" }}>
+                      <strong>V. Tiba Kembali:</strong> Bandung<br />
+                      <strong>Pada Tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br />
+                      <div style={{ marginTop: "5px", textAlign: "justify" }}>
+                        Telah diperiksa dengan keterangan bahwa perjalanan tersebut atas perintahnya dan semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "15px", textAlign: "center" }}>
+                        <div style={{ width: "200px" }}>
+                          <div style={{ fontWeight: "bold" }}>Pejabat Pembuat Komitmen</div>
+                          <div style={{ height: "50px" }}></div>
+                          <div style={{ fontWeight: "bold", textDecoration: "underline" }}>{data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T."}</div>
+                          <div>NIP. {data?.raw?.orderer_nip || "197412081999031002"}</div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Visum Notes */}
+              <div style={{ marginTop: "10px", fontSize: "10px" }}>
+                <strong>VI. PERHATIAN:</strong>
+                <div style={{ marginTop: "3px", textAlign: "justify" }}>
+                  PPK yang menerbitkan SPD, pegawai yang melakukan perjalanan dinas, para pejabat yang mengesahkan tanggal berangkat/tiba serta bendahara pengeluaran bertanggungjawab berdasarkan peraturan-peraturan Keuangan/Negara, apabila negara menderita rugi akibat kesalahan, kelalaian dan kealpaannya.
+                </div>
+              </div>
             </div>
           </div>
         </>
