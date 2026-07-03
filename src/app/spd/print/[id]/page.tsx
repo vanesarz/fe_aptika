@@ -2,10 +2,23 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { getSpdById, fromApiSpdItem, getDetailPerjalananById, fromApiDetailPerjalanan } from "@/services/api";
-
-type PrintPageProps = {
-  params: Promise<{ id: string }>;
+const formatDateIndonesian = (dateStr: string) => {
+  if (!dateStr) return "";
+  try {
+    const months = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    const cleanDateStr = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+    const date = new Date(cleanDateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  } catch {
+    return dateStr;
+  }
 };
 
 export default function SpdPrintPage({ params }: PrintPageProps) {
@@ -424,7 +437,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                       Melaksanakan perjalanan dinas<br/>
                       <table className="person-table" style={{ marginTop: "4px" }}>
                         <tbody>
-                          <tr><td style={{ width: "100px" }}>Pada tanggal</td><td>: {data?.tglMulai || "-"}</td></tr>
+                          <tr><td style={{ width: "100px" }}>Pada tanggal</td><td>: {formatDateIndonesian(data?.tglMulai) || "-"}</td></tr>
                           <tr><td>Dalam rangka</td><td>: {data?.maksud || "-"}</td></tr>
                           <tr><td></td><td>  ke {data?.tempatTujuan || "-"}</td></tr>
                         </tbody>
@@ -455,7 +468,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
               <table style={{ border: "none" }}>
                 <tbody>
                   <tr><td style={{ width: "90px" }}>Ditetapkan di</td><td>: Bandung</td></tr>
-                  <tr><td>Pada Tanggal</td><td>: {data?.tanggalSpd || data?.tglMulai || "2026-07-02"}</td></tr>
+                  <tr><td>Pada Tanggal</td><td>: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</td></tr>
                 </tbody>
               </table>
               
@@ -570,8 +583,8 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                   </td>
                   <td>
                     a. {data?.durasi || 1} Hari<br />
-                    b. {data?.tglMulai}<br />
-                    c. {data?.tglSelesai}
+                    b. {formatDateIndonesian(data?.tglMulai)}<br />
+                    c. {formatDateIndonesian(data?.tglSelesai)}
                   </td>
                 </tr>
                 <tr>
@@ -617,7 +630,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
               <div></div>
               <div style={{ width: "250px" }}>
                 <div>Dikeluarkan di: Bandung</div>
-                <div>Pada tanggal: {data?.tanggalSpd || data?.tglMulai || "2026-07-02"}</div>
+                <div>Pada tanggal: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</div>
                 <div style={{ borderBottom: "1px solid black", margin: "10px 0" }}></div>
                 <div style={{ fontWeight: "bold" }}>Kepala Bidang APTIKA,</div>
                 <div style={{ height: "65px" }}></div>
@@ -642,14 +655,14 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                   <td>
                     <strong>I. Berangkat dari:</strong> Bandung<br />
                     <strong>Ke:</strong> {data?.tempatTujuan}<br />
-                    <strong>Pada tanggal:</strong> {data?.tglMulai}<br /><br />
+                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglMulai)}<br /><br />
                     <div style={{ textAlign: "center", fontSize: "11px", color: "#64748b", borderTop: "1px dashed black", paddingTop: "5px", marginTop: "10px" }}>
                       Tanda Tangan Pejabat Berwenang
                     </div>
                   </td>
                   <td>
                     <strong>II. Tiba di:</strong> {data?.tempatTujuan}<br />
-                    <strong>Pada tanggal:</strong> {data?.tglMulai}<br />
+                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglMulai)}<br />
                     <div style={{ height: "40px" }}></div>
                     <div style={{ borderTop: "1px solid black", margin: "5px 0" }}></div>
                     <strong>(Pejabat di Lokasi Tujuan)</strong>
@@ -659,14 +672,14 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                   <td>
                     <strong>III. Berangkat dari:</strong> {data?.tempatTujuan}<br />
                     <strong>Ke:</strong> Bandung<br />
-                    <strong>Pada tanggal:</strong> {data?.tglSelesai}<br /><br />
+                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br /><br />
                     <div style={{ textAlign: "center", fontSize: "11px", color: "#64748b", borderTop: "1px dashed black", paddingTop: "5px", marginTop: "10px" }}>
                       Tanda Tangan Pejabat Berwenang
                     </div>
                   </td>
                   <td>
                     <strong>IV. Tiba di:</strong> Bandung<br />
-                    <strong>Pada tanggal:</strong> {data?.tglSelesai}<br />
+                    <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br />
                     <div style={{ height: "40px" }}></div>
                     <div style={{ borderTop: "1px solid black", margin: "5px 0" }}></div>
                     <strong>Kabid APTIKA Diskominfo Jabar</strong>
