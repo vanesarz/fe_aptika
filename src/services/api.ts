@@ -113,65 +113,65 @@ export const fromApiSpdItem = (item: any) => {
   };
 };
 
-// Mapper untuk format API baru (detail-perjalanan)
-export const fromApiDetailPerjalanan = (item: any) => {
-  const source = item?.data && typeof item.data === "object" && !Array.isArray(item.data) ? item.data : item;
-  const status = String(source?.status || "belum_selesai");
-  const displayStatus = status === "selesai" ? "SELESAI" : "BELUM SELESAI";
-
-  return {
-    id: source?.id,
-    travelCode: source?.travel_code || "",
-    kegiatan: source?.kegiatan || "",
-    subKegiatan: source?.sub_kegiatan || "",
-    tujuan: source?.tujuan || "",
-    tanggalBerangkat: source?.tanggal_berangkat || "",
-    tanggalKembali: source?.tanggal_kembali || "",
-    uangHarian: source?.uang_harian || 0,
-    alatAngkutan: source?.alat_angkutan || "",
-    deskripsi: source?.deskripsi || "",
-    status: displayStatus,
-    rawStatus: status,
-    rekening: source?.rekening || null,
-    peserta: (source?.peserta || []).map((p: any) => ({
-      id: p?.id,
-      nomorSpd: p?.nomor_spd || "",
-      lamaHari: p?.lama_hari || 0,
-      totalUang: p?.total_uang || 0,
-      pegawai: p?.pegawai || null,
-    })),
-    // Field compat dengan komponen lama
-    nama: source?.peserta?.[0]?.pegawai?.nama || "",
-    nip: source?.peserta?.[0]?.pegawai?.nip || "",
-    jabatan: source?.peserta?.[0]?.pegawai?.jabatan || "",
-    maksud: source?.deskripsi || "",
-    tglMulai: source?.tanggal_berangkat || "",
-    tglSelesai: source?.tanggal_kembali || "",
-  };
+export const toApiSpdPayload = (payload: any) => {
+  const result: any = {};
+  
+  if (payload.pejabatPemberi !== undefined || payload.orderer_name !== undefined) {
+    result.orderer_name = payload.pejabatPemberi ?? payload.orderer_name ?? "";
+  }
+  if (payload.ordererNip !== undefined || payload.orderer_nip !== undefined) {
+    result.orderer_nip = payload.ordererNip ?? payload.orderer_nip ?? "";
+  }
+  if (payload.ordererPosition !== undefined || payload.orderer_position !== undefined) {
+    result.orderer_position = payload.ordererPosition ?? payload.orderer_position ?? "";
+  }
+  if (payload.nama !== undefined || payload.employee_name !== undefined) {
+    result.employee_name = payload.nama ?? payload.employee_name ?? "";
+  }
+  if (payload.nip !== undefined || payload.employee_nip !== undefined) {
+    result.employee_nip = payload.nip ?? payload.employee_nip ?? "";
+  }
+  if (payload.pangkat !== undefined || payload.employee_rank !== undefined) {
+    result.employee_rank = payload.pangkat ?? payload.employee_rank ?? "";
+  }
+  if (payload.jabatan !== undefined || payload.employee_position !== undefined) {
+    result.employee_position = payload.jabatan ?? payload.employee_position ?? "";
+  }
+  if (payload.maksud !== undefined || payload.purpose !== undefined) {
+    result.purpose = payload.maksud ?? payload.purpose ?? "";
+  }
+  if (payload.angkutan !== undefined || payload.transportation !== undefined) {
+    result.transportation = payload.angkutan ?? payload.transportation ?? "";
+  }
+  if (payload.tempatBerangkat !== undefined || payload.departure_place !== undefined) {
+    result.departure_place = payload.tempatBerangkat ?? payload.departure_place ?? "";
+  }
+  if (payload.tempatTujuan !== undefined || payload.destination !== undefined) {
+    result.destination = payload.tempatTujuan ?? payload.destination ?? "";
+    result.tempatTujuan = payload.tempatTujuan ?? payload.destination ?? "";
+  }
+  if (payload.tglMulai !== undefined || payload.start_date !== undefined) {
+    result.start_date = payload.tglMulai ?? payload.start_date ?? "";
+  }
+  if (payload.tglSelesai !== undefined || payload.end_date !== undefined) {
+    result.end_date = payload.tglSelesai ?? payload.end_date ?? "";
+  }
+  if (payload.anggaran !== undefined || payload.budget_estimate !== undefined) {
+    result.budget_estimate = Number(payload.anggaran ?? payload.budget_estimate ?? 0);
+  }
+  if (payload.pengikut !== undefined || payload.followers !== undefined) {
+    result.followers = (payload.pengikut ?? payload.followers ?? []).map((follower: any) => ({
+      name: follower?.name || follower?.nama || "",
+      nip: follower?.nip || follower?.tglLahir || "",
+      position: follower?.position || follower?.keterangan || "",
+    }));
+  }
+  if (payload.status !== undefined) {
+    result.status = normalizeSpdStatus(payload.status);
+  }
+  
+  return result;
 };
-
-export const toApiSpdPayload = (payload: any) => ({
-  orderer_name: payload.pejabatPemberi ?? payload.orderer_name ?? "",
-  orderer_nip: payload.ordererNip ?? payload.orderer_nip ?? "",
-  orderer_position: payload.ordererPosition ?? payload.orderer_position ?? "",
-  employee_name: payload.nama ?? payload.employee_name ?? "",
-  employee_nip: payload.nip ?? payload.employee_nip ?? "",
-  employee_rank: payload.pangkat ?? payload.employee_rank ?? "",
-  employee_position: payload.jabatan ?? payload.employee_position ?? "",
-  purpose: payload.maksud ?? payload.purpose ?? "",
-  transportation: payload.angkutan ?? payload.transportation ?? "",
-  departure_place: payload.tempatBerangkat ?? payload.departure_place ?? "",
-  destination: payload.tempatTujuan ?? payload.destination ?? "",
-  start_date: payload.tglMulai ?? payload.start_date ?? "",
-  end_date: payload.tglSelesai ?? payload.end_date ?? "",
-  budget_estimate: Number(payload.anggaran ?? payload.budget_estimate ?? 0),
-  followers: (payload.pengikut ?? payload.followers ?? []).map((follower: any) => ({
-    name: follower?.name || follower?.nama || "",
-    nip: follower?.nip || follower?.tglLahir || "",
-    position: follower?.position || follower?.keterangan || "",
-  })),
-  status: normalizeSpdStatus(payload.status),
-});
 
 export const getSpdList = async (params?: { search?: string; status?: string }) => {
   const res = await api.get("/spd", { params });
