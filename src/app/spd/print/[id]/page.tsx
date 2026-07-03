@@ -365,23 +365,47 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
       </div>
 
       {/* DOCUMENT RENDER CONTAINER */}
-      {docType === "sp" ? (
+      {docType === "sp" ? (() => {
         /* ======================== SURAT PERINTAH (SP) ======================== */
-        <div className="print-container-sp">
-          {/* Kop Dinas */}
+
+        // Build full peserta list: main + pengikut
+        const mainPeserta = { nama: data?.nama, nip: data?.nip, pangkat: data?.pangkat, jabatan: data?.jabatan };
+        const allPeserta = [mainPeserta, ...(data?.pengikut || [])];
+
+        // Detect Kabid
+        const isKabid = (jabatan: string) =>
+          /kepala\s+bidang/i.test(jabatan || "");
+
+        const kabidList = allPeserta.filter(p => isKabid(p.jabatan));
+        const staffList = allPeserta.filter(p => !isKabid(p.jabatan));
+        const hasKabid = kabidList.length > 0;
+
+        // Helper: render person row
+        const renderPerson = (p: any, idx: number) => (
+          <li key={idx} style={{ paddingBottom: "8px" }}>
+            <table className="person-table">
+              <tbody>
+                <tr><td style={{ width: "60px" }}>Nama</td><td>: <strong>{p.nama}</strong></td></tr>
+                <tr><td>NIP</td><td>: {p.nip || "-"}</td></tr>
+                <tr><td>Pangkat</td><td>: {p.pangkat || "-"}</td></tr>
+                <tr><td>Jabatan</td><td>: {p.jabatan || "-"}</td></tr>
+              </tbody>
+            </table>
+          </li>
+        );
+
+        // Helper: Kop + Body table (shared)
+        const renderKop = () => (
           <div className="kop-surat-inner-sp">
             <div className="kop-surat-sp">
-              <img 
-                src="/logo-jabar.png" 
-                alt="Logo Jabar" 
+              <img
+                src="/logo-jabar.png"
+                alt="Logo Jabar"
                 className="kop-logo-sp"
-                onError={(e) => { 
+                onError={(e) => {
                   const t = e.target as HTMLImageElement;
-                  if (!t.dataset.fallback) {
-                    t.dataset.fallback = "1";
-                    t.src = "https://upload.wikimedia.org/wikipedia/commons/0/07/West_Java_coa.png";
-                  }
-                }} 
+                  if (!t.dataset.fallback) { t.dataset.fallback = "1"; t.src = "https://upload.wikimedia.org/wikipedia/commons/0/07/West_Java_coa.png"; }
+                }}
               />
               <div className="kop-teks-sp">
                 <div style={{ fontSize: "14px", fontWeight: "normal" }}>PEMERINTAH DAERAH PROVINSI JAWA BARAT</div>
@@ -392,129 +416,139 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
               </div>
             </div>
           </div>
+        );
 
-          {/* Title */}
-          <div style={{ textAlign: "center", marginBottom: "20px" }}>
-            <div style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "2px" }}>SURAT PERINTAH</div>
-            <div style={{ fontSize: "12px" }}>Nomor : {data?.noSpd || "1818/KOM.03.01.08/APTIKA"}</div>
-          </div>
+        const renderUntukBody = () => (
+          <tr>
+            <td className="col-label">Untuk</td>
+            <td className="col-colon">:</td>
+            <td>
+              <ol style={{ margin: 0, paddingLeft: "15px", listStyleType: "decimal" }}>
+                <li style={{ paddingBottom: "8px" }}>
+                  Melaksanakan perjalanan dinas<br/>
+                  <table className="person-table" style={{ marginTop: "4px" }}>
+                    <tbody>
+                      <tr><td style={{ width: "100px" }}>Pada tanggal</td><td>: {formatDateIndonesian(data?.tglMulai) || "-"}</td></tr>
+                      <tr><td>Dalam rangka</td><td>: {data?.maksud || "-"}</td></tr>
+                      <tr><td></td><td>&nbsp;&nbsp;ke {data?.tempatTujuan || "-"}</td></tr>
+                    </tbody>
+                  </table>
+                </li>
+                <li style={{ paddingBottom: "8px" }}>
+                  Pembiayaan dibebankan pada DPA-SKPD Dinas Komunikasi dan Informatika Provinsi Jawa Barat Tahun Anggaran 2026 pada :<br/>
+                  <table className="person-table" style={{ marginTop: "4px" }}>
+                    <tbody>
+                      <tr><td style={{ width: "100px" }}>Kegiatan</td><td>: {data?.kegiatan || "-"}</td></tr>
+                      <tr><td>Sub Kegiatan</td><td>: {data?.subKegiatan || "-"}</td></tr>
+                      <tr><td>Kode Rekening</td><td>: {data?.kodeRekening || "-"}</td></tr>
+                    </tbody>
+                  </table>
+                </li>
+                <li>Melaksanakan tugas ini dengan sebaik-baiknya dengan penuh rasa tanggung jawab serta memberikan laporan kegiatan sesuai dengan ketentuan yang berlaku.</li>
+              </ol>
+            </td>
+          </tr>
+        );
 
-          {/* Body */}
-          <table className="surat-table">
-            <tbody>
-              <tr>
-                <td className="col-label">Dasar</td>
-                <td className="col-colon">:</td>
-                <td>
-                  <ol style={{ margin: 0, paddingLeft: "15px" }}>
-                    <li style={{ paddingBottom: "4px" }}>Peraturan Daerah Provinsi Jawa Barat Nomor 10 Tahun 2022 tanggal 15 Desember 2022 Tentang Anggaran Pendapatan dan Belanja Daerah Tahun Anggaran 2023</li>
-                    <li>Peraturan Gubernur Jawa Barat Nomor 118 Tahun 2022 tanggal 16 Desember Tahun 2022 tentang Penjabaran Anggaran Pendapatan dan Belanja Daerah Tahun Anggaran 2023.</li>
-                  </ol>
-                </td>
-              </tr>
-              
-              <tr>
-                <td colSpan={3} style={{ textAlign: "center", fontWeight: "bold", padding: "20px 0", letterSpacing: "2px" }}>
-                  MEMERINTAHKAN
-                </td>
-              </tr>
-
-              <tr>
-                <td className="col-label">Kepada</td>
-                <td className="col-colon">:</td>
-                <td>
-                  <ol style={{ margin: 0, paddingLeft: "15px", listStyleType: "decimal" }}>
-                    <li style={{ paddingBottom: "8px" }}>
-                      <table className="person-table">
-                        <tbody>
-                          <tr><td style={{ width: "60px" }}>Nama</td><td>: <strong>{data?.nama}</strong></td></tr>
-                          <tr><td>NIP</td><td>: {data?.nip}</td></tr>
-                          <tr><td>Pangkat</td><td>: {data?.pangkat || "-"}</td></tr>
-                          <tr><td>Jabatan</td><td>: {data?.jabatan || "-"}</td></tr>
-                        </tbody>
-                      </table>
-                    </li>
-                    
-                    {data?.pengikut?.map((p: any, idx: number) => (
-                      <li key={idx} style={{ paddingBottom: "8px" }}>
-                        <table className="person-table">
-                          <tbody>
-                            <tr><td style={{ width: "60px" }}>Nama</td><td>: <strong>{p.nama}</strong></td></tr>
-                            <tr><td>NIP</td><td>: {p.nip || p.tglLahir || "-"}</td></tr>
-                            <tr><td>Pangkat</td><td>: {p.pangkat || "-"}</td></tr>
-                            <tr><td>Jabatan</td><td>: {p.jabatan || p.keterangan || "-"}</td></tr>
-                          </tbody>
-                        </table>
-                      </li>
-                    ))}
-                  </ol>
-                </td>
-              </tr>
-
-              <tr>
-                <td className="col-label">Untuk</td>
-                <td className="col-colon">:</td>
-                <td>
-                  <ol style={{ margin: 0, paddingLeft: "15px", listStyleType: "decimal" }}>
-                    <li style={{ paddingBottom: "8px" }}>
-                      Melaksanakan perjalanan dinas<br/>
-                      <table className="person-table" style={{ marginTop: "4px" }}>
-                        <tbody>
-                          <tr><td style={{ width: "100px" }}>Pada tanggal</td><td>: {formatDateIndonesian(data?.tglMulai) || "-"}</td></tr>
-                          <tr><td>Dalam rangka</td><td>: {data?.maksud || "-"}</td></tr>
-                          <tr><td></td><td>  ke {data?.tempatTujuan || "-"}</td></tr>
-                        </tbody>
-                      </table>
-                    </li>
-                    <li style={{ paddingBottom: "8px" }}>
-                      Pembiayaan dibebankan pada DPA-SKPD Dinas Komunikasi dan Informatika Provinsi Jawa Barat Tahun Anggaran 2026 pada :<br/>
-                      <table className="person-table" style={{ marginTop: "4px" }}>
-                        <tbody>
-                          <tr><td style={{ width: "100px" }}>Kegiatan</td><td>: {data?.kegiatan || "Pengelolaan Nama Domain yang telah ditetapkan oleh Pemerintah Pusat dan Sub Domain di lingkup Pemerintah Daerah Provinsi"}</td></tr>
-                          <tr><td>Sub Kegiatan</td><td>: {data?.subKegiatan || "Penatalaksanaan dan Pengawasan Nama Domain dan Sub Domain dalam Penyelenggaraan Pemerintahan Daerah Provinsi"}</td></tr>
-                          <tr><td>Kode Rekening</td><td>: {data?.kodeRekening || "2.16.03.1 01.02 5.1.02.04.01 0001"}</td></tr>
-                        </tbody>
-                      </table>
-                    </li>
-                    <li>
-                      Melaksanakan tugas ini dengan sebaik-baiknya dengan penuh rasa tanggung jawab serta memberikan laporan kegiatan sesuai dengan ketentuan yang berlaku.
-                    </li>
-                  </ol>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Footer */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "40px" }}>
-            <div style={{ width: "350px", textAlign: "left" }}>
-              <table style={{ border: "none" }}>
-                <tbody>
-                  <tr><td style={{ width: "90px" }}>Ditetapkan di</td><td>: Bandung</td></tr>
-                  <tr><td>Pada Tanggal</td><td>: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</td></tr>
-                </tbody>
-              </table>
-              
-              <div style={{ marginTop: "15px", textAlign: "center" }}>
-                <div>a.n KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</div>
-                <div>PROVINSI JAWA BARAT</div>
-                <div>SEKRETARIS,</div>
-                
-                <div className="signature-box" style={{ marginTop: "20px", textAlign: "left" }}>
-                  <div style={{ flexShrink: 0 }}>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/QR_code_for_mobile_English_Wikipedia.svg/150px-QR_code_for_mobile_English_Wikipedia.svg.png" alt="QR Code" width="50" height="50" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: "9px", marginBottom: "4px" }}>Ditandatangani secara elektronik oleh:</div>
-                    <div style={{ fontWeight: "bold", fontSize: "10px", marginBottom: "8px" }}>SEKRETARIS DINAS KOMUNIKASI DAN INFORMATIKA PROVINSI JAWA BARAT</div>
-                    <div style={{ fontWeight: "bold", fontSize: "10px" }}>AGI AGUNG GALUH PURWA, S.STP., M.Sc., MPA.</div>
-                  </div>
+        // Helper: render one full SP document
+        const renderSpDoc = (pesertaArr: any[], nomorSp: string, signerLabel: string, signerTitle: string, signerName: string, signerNip: string) => (
+          <div className="print-container-sp">
+            {renderKop()}
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+              <div style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "2px" }}>SURAT PERINTAH</div>
+              <div style={{ fontSize: "12px" }}>Nomor : {nomorSp}</div>
+            </div>
+            <table className="surat-table">
+              <tbody>
+                <tr>
+                  <td className="col-label">Dasar</td>
+                  <td className="col-colon">:</td>
+                  <td>
+                    <ol style={{ margin: 0, paddingLeft: "15px" }}>
+                      <li style={{ paddingBottom: "4px" }}>Peraturan Daerah Provinsi Jawa Barat Nomor 10 Tahun 2022 tanggal 15 Desember 2022 Tentang Anggaran Pendapatan dan Belanja Daerah Tahun Anggaran 2023</li>
+                      <li>Peraturan Gubernur Jawa Barat Nomor 118 Tahun 2022 tanggal 16 Desember Tahun 2022 tentang Penjabaran Anggaran Pendapatan dan Belanja Daerah Tahun Anggaran 2023.</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={3} style={{ textAlign: "center", fontWeight: "bold", padding: "20px 0", letterSpacing: "2px" }}>MEMERINTAHKAN</td>
+                </tr>
+                <tr>
+                  <td className="col-label">Kepada</td>
+                  <td className="col-colon">:</td>
+                  <td>
+                    <ol style={{ margin: 0, paddingLeft: "15px", listStyleType: "decimal" }}>
+                      {pesertaArr.map((p, idx) => renderPerson(p, idx))}
+                    </ol>
+                  </td>
+                </tr>
+                {renderUntukBody()}
+              </tbody>
+            </table>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "40px" }}>
+              <div style={{ width: "350px", textAlign: "left" }}>
+                <table style={{ border: "none" }}>
+                  <tbody>
+                    <tr><td style={{ width: "90px" }}>Ditetapkan di</td><td>: Bandung</td></tr>
+                    <tr><td>Pada Tanggal</td><td>: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</td></tr>
+                  </tbody>
+                </table>
+                <div style={{ marginTop: "15px", textAlign: "center" }}>
+                  <div>{signerLabel}</div>
+                  <div style={{ height: "65px" }}></div>
+                  <div style={{ fontWeight: "bold", textDecoration: "underline" }}>{signerName}</div>
+                  <div style={{ fontSize: "11px" }}>{signerTitle}</div>
+                  <div>NIP. {signerNip}</div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      ) : (
+        );
+
+        if (hasKabid) {
+          // Kabid signed by Sekretaris/a.n. Kadis
+          const kabidNomorSp = `${data?.noSpd || "SP/APTIKA/2026"}/KBD`;
+          const staffNomorSp = `${data?.noSpd || "SP/APTIKA/2026"}/STF`;
+          const kabidPerson = kabidList[0];
+
+          return (
+            <>
+              {/* SP 1: Kabid saja – ditandatangani Sekretaris */}
+              {renderSpDoc(
+                kabidList,
+                kabidNomorSp,
+                "a.n KEPALA DINAS KOMUNIKASI DAN INFORMATIKA\nPROVINSI JAWA BARAT\nSEKRETARIS,",
+                "SEKRETARIS DINAS KOMUNIKASI DAN INFORMATIKA\nPROVINSI JAWA BARAT",
+                data?.raw?.secretary_name || "AGI AGUNG GALUH PURWA, S.STP., M.Sc., MPA.",
+                data?.raw?.secretary_nip || "197507221999031004"
+              )}
+
+              {/* Page Break */}
+              <div className="page-break"></div>
+
+              {/* SP 2: Staff biasa – ditandatangani Kabid */}
+              {staffList.length > 0 && renderSpDoc(
+                staffList,
+                staffNomorSp,
+                `KEPALA BIDANG APLIKASI DAN INFORMATIKA,`,
+                "",
+                kabidPerson?.nama || data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T.",
+                kabidPerson?.nip || data?.raw?.orderer_nip || "197412081999031002"
+              )}
+            </>
+          );
+        }
+
+        // No Kabid: single SP, signed by Sekretaris
+        return renderSpDoc(
+          allPeserta,
+          data?.noSpd || "SP/APTIKA/2026",
+          "a.n KEPALA DINAS KOMUNIKASI DAN INFORMATIKA\nPROVINSI JAWA BARAT\nSEKRETARIS,",
+          "SEKRETARIS DINAS KOMUNIKASI DAN INFORMATIKA\nPROVINSI JAWA BARAT",
+          data?.raw?.secretary_name || "AGI AGUNG GALUH PURWA, S.STP., M.Sc., MPA.",
+          data?.raw?.secretary_nip || "197507221999031004"
+        );
+      })() : (
         /* ======================== SURAT PERJALANAN DINAS (SPD) ======================== */
         <>
           {/* PAGE 1: SURAT PERJALANAN DINAS (SPD) FRONT & VISUM (TWO COLUMNS) */}
