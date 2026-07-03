@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { getSpdById, fromApiSpdItem } from "@/services/api";
+import { getSpdById, fromApiSpdItem, getDetailPerjalananById, fromApiDetailPerjalanan } from "@/services/api";
 
 type PrintPageProps = {
   params: Promise<{ id: string }>;
@@ -19,10 +19,17 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await getSpdById(Number(id));
-        setData(fromApiSpdItem(res));
+        // Coba gunakan API Baru (detail-perjalanan) terlebih dahulu
+        const res = await getDetailPerjalananById(Number(id));
+        setData(fromApiDetailPerjalanan(res));
       } catch {
-        setData(null);
+        try {
+          // Fallback ke API lama
+          const res = await getSpdById(Number(id));
+          setData(fromApiSpdItem(res));
+        } catch {
+          setData(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -427,9 +434,9 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                       Pembiayaan dibebankan pada DPA-SKPD Dinas Komunikasi dan Informatika Provinsi Jawa Barat Tahun Anggaran 2026 pada :<br/>
                       <table className="person-table" style={{ marginTop: "4px" }}>
                         <tbody>
-                          <tr><td style={{ width: "100px" }}>Kegiatan</td><td>: Pengelolaan Nama Domain yang telah ditetapkan oleh Pemerintah Pusat dan Sub Domain di lingkup Pemerintah Daerah Provinsi</td></tr>
-                          <tr><td>Sub Kegiatan</td><td>: Penatalaksanaan dan Pengawasan Nama Domain dan Sub Domain dalam Penyelenggaraan Pemerintahan Daerah Provinsi</td></tr>
-                          <tr><td>Kode Rekening</td><td>: 2.16.03.1 01.02 5.1.02.04.01 0001</td></tr>
+                          <tr><td style={{ width: "100px" }}>Kegiatan</td><td>: {data?.kegiatan || "Pengelolaan Nama Domain yang telah ditetapkan oleh Pemerintah Pusat dan Sub Domain di lingkup Pemerintah Daerah Provinsi"}</td></tr>
+                          <tr><td>Sub Kegiatan</td><td>: {data?.subKegiatan || "Penatalaksanaan dan Pengawasan Nama Domain dan Sub Domain dalam Penyelenggaraan Pemerintahan Daerah Provinsi"}</td></tr>
+                          <tr><td>Kode Rekening</td><td>: {data?.kodeRekening || "2.16.03.1 01.02 5.1.02.04.01 0001"}</td></tr>
                         </tbody>
                       </table>
                     </li>

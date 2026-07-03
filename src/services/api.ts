@@ -221,22 +221,36 @@ export const fromApiDetailPerjalanan = (item: any) => {
       ? item.data
       : item;
 
+  const pesertaList = Array.isArray(source?.peserta) ? source.peserta : [];
+  const mainPeserta = pesertaList[0]?.pegawai || {};
+  const followers = pesertaList.slice(1).map((p: any) => ({
+    nama: p?.pegawai?.nama || "",
+    nip: p?.pegawai?.nip || "",
+    pangkat: p?.pegawai?.pangkat || "",
+    jabatan: p?.pegawai?.jabatan || "",
+  }));
+
   return {
     id: source?.id,
     travelCode: source?.travel_code || source?.travelCode || "",
+    noSpd: source?.peserta?.[0]?.nomor_spd || source?.travel_code || "",
     tujuan: source?.tujuan || source?.destination || "",
+    tempatTujuan: source?.tujuan || source?.destination || "",
     deskripsi: source?.deskripsi || source?.description || "",
+    maksud: source?.deskripsi || source?.description || "",
     tempatBerangkat:
       source?.tempat_berangkat ||
       source?.departure_place ||
       source?.tempatBerangkat ||
-      "",
+      "Bandung",
     tglMulai:
+      source?.tanggal_berangkat ||
       source?.tanggal_mulai ||
       source?.start_date ||
       source?.tglMulai ||
       "",
     tglSelesai:
+      source?.tanggal_kembali ||
       source?.tanggal_selesai ||
       source?.end_date ||
       source?.tglSelesai ||
@@ -248,6 +262,16 @@ export const fromApiDetailPerjalanan = (item: any) => {
         ? "BELUM SELESAI"
         : (source?.status || "").toUpperCase(),
     rawStatus: source?.status,
+    nama: mainPeserta?.nama || "",
+    nip: mainPeserta?.nip || "",
+    pangkat: mainPeserta?.pangkat || "",
+    jabatan: mainPeserta?.jabatan || "",
+    pengikut: followers,
+    kegiatan: source?.kegiatan || "",
+    subKegiatan: source?.sub_kegiatan || "",
+    kodeRekening: source?.rekening?.kode_rekening || "",
+    pejabatPemberi: source?.rekening?.nama_rekening || "Sekretaris Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
+    angkutan: source?.alat_angkutan || "Kendaraan Dinas",
     raw: source,
   };
 };
