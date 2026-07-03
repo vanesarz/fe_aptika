@@ -702,72 +702,81 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
 
             {/* RIGHT COLUMN: VISUM */}
             <div style={{ flex: "1 1 50%", paddingLeft: "5px", display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", width: "100%", borderBottom: "1px solid black" }}>
-                <div style={{ width: "50%", padding: "5px", fontSize: "11px" }}>
-                  <strong>I.</strong><br/>
-                </div>
-                <div style={{ width: "50%", padding: "5px", fontSize: "11px", borderLeft: "1px solid black" }}>
-                  Berangkat dari : (Tempat Kedudukan) Bandung<br/>
-                  Ke : {data?.tempatTujuan}<br/>
-                  Pada Tanggal : {formatDateIndonesian(data?.tglMulai)}
-                </div>
-              </div>
 
-              <table className="table-visum" style={{ marginTop: "0", fontSize: "11px" }}>
+              <table className="table-visum" style={{ marginTop: "0", fontSize: "11px", borderCollapse: "collapse", width: "100%" }}>
                 <tbody>
+                  {/* ROW I: Berangkat dari tempat kedudukan */}
                   <tr>
-                    <td style={{ padding: "8px", height: "80px", borderTop: "none" }}>
+                    <td style={{ padding: "8px", height: "80px", width: "50%", border: "1px solid black" }}>
+                      <strong>I.</strong>
+                    </td>
+                    <td style={{ padding: "8px", height: "80px", width: "50%", border: "1px solid black" }}>
+                      Berangkat dari : (Tempat Kedudukan) Bandung<br />
+                      Ke : {data?.tempatTujuan}<br />
+                      Pada Tanggal : {formatDateIndonesian(data?.tglMulai)}
+                    </td>
+                  </tr>
+
+                  {/* ROW II–III */}
+                  <tr>
+                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>II. Tiba di:</strong> {data?.tempatTujuan}<br />
                       <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglMulai)}<br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "20px" }}></div>
-                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                      <div style={{ height: "25px" }}></div>
+                      <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
-                    <td style={{ padding: "8px", height: "80px", borderTop: "none" }}>
+                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>Berangkat dari:</strong> {data?.tempatTujuan}<br />
                       <strong>Ke:</strong> Bandung<br />
                       <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "20px" }}></div>
-                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                      <div style={{ height: "15px" }}></div>
+                      <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
                   </tr>
+
+                  {/* ROW III–IV */}
                   <tr>
-                    <td style={{ padding: "8px", height: "80px" }}>
+                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>III. Tiba di:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "20px" }}></div>
-                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                      <div style={{ height: "25px" }}></div>
+                      <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
-                    <td style={{ padding: "8px", height: "80px" }}>
+                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>Berangkat dari:</strong><br />
                       <strong>Ke:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "20px" }}></div>
-                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                      <div style={{ height: "15px" }}></div>
+                      <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
                   </tr>
+
+                  {/* ROW IV–V (extra stop) */}
                   <tr>
-                    <td style={{ padding: "8px", height: "80px" }}>
+                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>IV. Tiba di:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "20px" }}></div>
-                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                      <div style={{ height: "25px" }}></div>
+                      <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
-                    <td style={{ padding: "8px", height: "80px" }}>
+                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>Berangkat dari:</strong><br />
                       <strong>Ke:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "20px" }}></div>
-                      <div style={{ borderTop: "1px solid black", margin: "5px 0", width: "70%" }}></div>
+                      <div style={{ height: "15px" }}></div>
+                      <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
                   </tr>
+
+                  {/* ROW V: Tiba Kembali + TTD PPK */}
                   <tr>
-                    <td colSpan={2} style={{ padding: "8px", height: "auto" }}>
+                    <td colSpan={2} style={{ padding: "8px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>V. Tiba Kembali:</strong> Bandung<br />
                       <strong>Pada Tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br />
                       <div style={{ marginTop: "5px", textAlign: "justify" }}>
