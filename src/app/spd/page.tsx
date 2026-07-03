@@ -564,11 +564,20 @@ export default function SpdDashboardPage() {
                 onClick={async () => {
                   setShowReopenModal(false);
                   try {
-                    await updateSpd(selectedSpd.id, { status: "approved" });
-                    // Refresh data
-                    const res = await getSpdList({ search: searchTerm });
-                    if (res?.data) {
-                      setSpdList(res.data.map(fromApiSpdItem));
+                    await updateDetailPerjalananStatus(selectedSpd.id, "belum_selesai");
+                    // Refresh data using the new API
+                    const res = await getDetailPerjalananList();
+                    if (res?.data && res.data.length > 0) {
+                      let data = res.data.map(fromApiDetailPerjalanan);
+                      if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        data = data.filter((item: any) =>
+                          (item.tujuan || "").toLowerCase().includes(term) ||
+                          (item.deskripsi || "").toLowerCase().includes(term) ||
+                          (item.travelCode || "").toLowerCase().includes(term)
+                        );
+                      }
+                      setSpdList(data);
                     } else {
                       setSpdList([]);
                     }
