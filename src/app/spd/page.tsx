@@ -304,7 +304,14 @@ export default function SpdDashboardPage() {
                                   await updateDetailPerjalananStatus(item.id, "selesai");
                                   router.push(`/spd/visum-form/${item.id}`);
                                 } catch {
-                                  setShowConfirmModal(true);
+                                  try {
+                                    // Fallback ke API lama jika API baru gagal (misal karena ID tidak ditemukan/tabel kosong)
+                                    await updateSpd(item.id, { status: "completed" });
+                                    router.push(`/spd/visum-form/${item.id}`);
+                                  } catch (fallbackErr) {
+                                    console.error("Fallback updateSpd gagal:", fallbackErr);
+                                    setShowConfirmModal(true);
+                                  }
                                 }
                               }}
                               style={{ display: "none" }}
