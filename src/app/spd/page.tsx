@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid
 } from "recharts";
-import { getSpdList, deleteSpd, fromApiSpdItem } from "@/services/api";
+import { getSpdList, deleteSpd, fromApiSpdItem, updateSpd } from "@/services/api";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGS", "SEP", "OKT", "NOV", "DES"];
 
@@ -66,6 +66,7 @@ export default function SpdDashboardPage() {
   
   // Modal states for finished travel confirmation
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showReopenModal, setShowReopenModal] = useState(false);
   const [selectedSpd, setSelectedSpd] = useState<any>(null);
 
   useEffect(() => {
@@ -265,21 +266,54 @@ export default function SpdDashboardPage() {
                       <td style={{ padding: "12px 8px", color: "#334155", maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {item.maksud}
                       </td>
-                      <td style={{textAlign:"center"}}>
-                        <input
-                        type="checkbox"
-                        checked={item.status==="SELESAI"}
-                        onChange={() => {
-                          setSelectedSpd(item);
-                          setShowConfirmModal(true);
-                        }}
-                        style={{
-                            width:18,
-                            height:18,
-                            accentColor:"#6d28d9",
-                            cursor: "pointer"
-                        }}
-                        />
+                      <td style={{ textAlign: "center", padding: "12px 8px" }}>
+                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                          <label style={{ cursor: "pointer", display: "inline-block", position: "relative" }}>
+                            <input
+                              type="checkbox"
+                              checked={item.status === "SELESAI"}
+                              onChange={() => {
+                                setSelectedSpd(item);
+                                if (item.status === "SELESAI") {
+                                  setShowReopenModal(true);
+                                } else {
+                                  setShowConfirmModal(true);
+                                }
+                              }}
+                              style={{ display: "none" }}
+                            />
+                            <span style={{
+                              display: "inline-block",
+                              width: "20px",
+                              height: "20px",
+                              border: item.status === "SELESAI" ? "none" : "2px solid #cbd5e1",
+                              borderRadius: "4px",
+                              backgroundColor: item.status === "SELESAI" ? "#6d28d9" : "transparent",
+                              position: "relative",
+                              transition: "all 0.2s ease"
+                            }}>
+                              {item.status === "SELESAI" && (
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="white"
+                                  strokeWidth="3.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  style={{
+                                    position: "absolute",
+                                    top: "2px",
+                                    left: "2px",
+                                    width: "16px",
+                                    height: "16px"
+                                  }}
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </span>
+                          </label>
+                        </div>
                       </td>
                       <td style={{ padding: "12px 8px" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
@@ -434,6 +468,103 @@ export default function SpdDashboardPage() {
                 }}
               >
                 Iya, Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Buka Kembali Perjalanan */}
+      {showReopenModal && selectedSpd && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "16px",
+            padding: "32px",
+            width: "100%",
+            maxWidth: "460px",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            textAlign: "left"
+          }}>
+            <h3 style={{
+              fontSize: "18px",
+              fontWeight: "700",
+              color: "#0f2540",
+              marginBottom: "16px"
+            }}>
+              Konfirmasi Buka Kembali Perjalanan
+            </h3>
+            <p style={{
+              fontSize: "14px",
+              color: "#64748b",
+              lineHeight: "1.6",
+              marginBottom: "24px"
+            }}>
+              Apakah Anda yakin ingin membuka kembali perjalanan dinas ini? Status akan dikembalikan menjadi DISETUJUI.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button
+                onClick={() => {
+                  setShowReopenModal(false);
+                  setSelectedSpd(null);
+                }}
+                style={{
+                  backgroundColor: "white",
+                  border: "1px solid #cbd5e1",
+                  color: "#475569",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={async () => {
+                  setShowReopenModal(false);
+                  try {
+                    await updateSpd(selectedSpd.id, { status: "approved" });
+                    // Refresh data
+                    const res = await getSpdList({ search: searchTerm });
+                    if (res?.data) {
+                      setSpdList(res.data.map(fromApiSpdItem));
+                    } else {
+                      setSpdList([]);
+                    }
+                  } catch (err) {
+                    console.error("Gagal membuka kembali SPD:", err);
+                    alert("Gagal membuka kembali SPD.");
+                  } finally {
+                    setSelectedSpd(null);
+                  }
+                }}
+                style={{
+                  backgroundColor: "#0f2540",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 6px -1px rgba(15, 37, 64, 0.2)"
+                }}
+              >
+                Ya, Buka Kembali
               </button>
             </div>
           </div>
