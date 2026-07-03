@@ -93,6 +93,9 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
       <style>{`
         /* Print Styles */
         @media print {
+          @page {
+            size: ${docType === "spd" ? "landscape" : "portrait"};
+          }
           body {
             background-color: white !important;
             color: black !important;
@@ -134,8 +137,8 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
 
         .print-container-spd {
           background-color: white;
-          width: 210mm;
-          min-height: 297mm;
+          width: 297mm;
+          min-height: 210mm;
           margin: 30px auto;
           padding: 20mm;
           box-shadow: 0 4px 10px rgba(0,0,0,0.15);
