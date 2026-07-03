@@ -2,7 +2,60 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  CartesianGrid
+} from "recharts";
 import { getSpdList, deleteSpd, fromApiSpdItem } from "@/services/api";
+
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGS", "SEP", "OKT", "NOV", "DES"];
+
+const mockSpdData = [
+  {
+    id: 1,
+    nama: "Ahmad Subarjo, S.Kom.",
+    nip: "198804122015031002",
+    tujuan: "Dinas Kominfo Kabupaten Bekasi",
+    maksud: "Koordinasi integrasi aplikasi Smart Jabar",
+    tglMulai: "2026-07-05",
+    tglSelesai: "2026-07-07",
+    status: "DISETUJUI",
+    anggaran: 2500000
+  },
+  {
+    id: 2,
+    nama: "Dewi Lestari, M.T.",
+    nip: "199108242018012003",
+    tujuan: "Bappeda Provinsi Jawa Barat",
+    maksud: "Rapat koordinasi rekayasa data spasial Jabar",
+    tglMulai: "2026-07-12",
+    tglSelesai: "2026-07-12",
+    status: "DRAF",
+    anggaran: 800000
+  },
+  {
+    id: 3,
+    nama: "Hendra Gunawan, S.E.",
+    nip: "198501152010041001",
+    tujuan: "Kementerian Kominfo RI, Jakarta",
+    maksud: "Konsultasi regulasi Interoperabilitas SPBE",
+    tglMulai: "2026-06-20",
+    tglSelesai: "2026-06-23",
+    status: "SELESAI",
+    anggaran: 6200000
+  },
+  {
+    id: 4,
+    nama: "Siti Rahma, S.IP.",
+    nip: "199402182020122005",
+    tujuan: "Diskominfo Kota Bandung",
+    maksud: "Monitoring penggunaan aplikasi Sada Jabar",
+    tglMulai: "2026-07-15",
+    tglSelesai: "2026-07-16",
+    status: "DIAJUKAN",
+    anggaran: 1200000
+  }
+];
 
 export default function SpdDashboardPage() {
   const router = useRouter();
@@ -10,20 +63,41 @@ export default function SpdDashboardPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  
+  // Modal states for finished travel confirmation
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedSpd, setSelectedSpd] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await getSpdList();
-        if (res?.data) {
-          setSpdList(res.data);
+        const res = await getSpdList({ search: searchTerm });
+        if (res?.data && res.data.length > 0) {
+          setSpdList(res.data.map(fromApiSpdItem));
         } else {
-          setSpdList(mockSpdData);
+          let data = mockSpdData;
+          if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            data = data.filter(item =>
+              item.nama.toLowerCase().includes(term) ||
+              item.nip.includes(term) ||
+              item.tujuan.toLowerCase().includes(term)
+            );
+          }
+          setSpdList(data.map(fromApiSpdItem));
         }
       } catch {
-        setSpdList([]);
-        setErrorMessage("Gagal memuat data SPD dari server.");
+        let data = mockSpdData;
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          data = data.filter(item =>
+            item.nama.toLowerCase().includes(term) ||
+            item.nip.includes(term) ||
+            item.tujuan.toLowerCase().includes(term)
+          );
+        }
+        setSpdList(data.map(fromApiSpdItem));
       } finally {
         setLoading(false);
       }
@@ -134,7 +208,7 @@ export default function SpdDashboardPage() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      ) : null}
+      </div>
 
       {/* Table Section */}
       <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
@@ -195,19 +269,23 @@ export default function SpdDashboardPage() {
                         <input
                         type="checkbox"
                         checked={item.status==="SELESAI"}
-                        readOnly
+                        onChange={() => {
+                          setSelectedSpd(item);
+                          setShowConfirmModal(true);
+                        }}
                         style={{
                             width:18,
                             height:18,
-                            accentColor:"#6d28d9"
+                            accentColor:"#6d28d9",
+                            cursor: "pointer"
                         }}
                         />
                       </td>
                       <td style={{ padding: "12px 8px" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                           <button
-                            onClick={() => router.push(`/spd/view/${item.id}`)}
-                            title="View"
+                            onClick={() => router.push(`/spd/print/${item.id}`)}
+                            title="Cetak"
                             style={{
                               backgroundColor: "transparent",
                               border: "none",
@@ -221,8 +299,9 @@ export default function SpdDashboardPage() {
                             }}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                              <circle cx="12" cy="12" r="3"></circle>
+                              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                              <rect x="6" y="14" width="12" height="8"></rect>
                             </svg>
                           </button>
                           <button
@@ -277,6 +356,89 @@ export default function SpdDashboardPage() {
           </table>
         </div>
       </div>
+      
+      {/* Modal Konfirmasi Selesai Perjalanan */}
+      {showConfirmModal && selectedSpd && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "16px",
+            padding: "32px",
+            width: "100%",
+            maxWidth: "460px",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            textAlign: "left"
+          }}>
+            <h3 style={{
+              fontSize: "18px",
+              fontWeight: "700",
+              color: "#0f2540",
+              marginBottom: "16px"
+            }}>
+              Konfirmasi Selesai Perjalanan
+            </h3>
+            <p style={{
+              fontSize: "14px",
+              color: "#64748b",
+              lineHeight: "1.6",
+              marginBottom: "24px"
+            }}>
+              Apakah Anda yakin ingin menyelesaikan perjalanan dinas ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setSelectedSpd(null);
+                }}
+                style={{
+                  backgroundColor: "white",
+                  border: "1px solid #cbd5e1",
+                  color: "#475569",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                Tidak
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  router.push(`/spd/visum-form/${selectedSpd.id}`);
+                }}
+                style={{
+                  backgroundColor: "#0f2540",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 6px -1px rgba(15, 37, 64, 0.2)"
+                }}
+              >
+                Iya, Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

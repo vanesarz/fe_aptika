@@ -91,6 +91,8 @@ export const fromApiSpdItem = (item: any) => {
   return {
     id: source?.id,
     pejabatPemberi: source?.orderer_name || source?.pejabatPemberi || "",
+    ordererNip: source?.orderer_nip || source?.ordererNip || "",
+    ordererPosition: source?.orderer_position || source?.ordererPosition || "",
     nama: source?.employee_name || source?.nama || "",
     nip: source?.employee_nip || source?.nip || "",
     pangkat: source?.employee_rank || source?.pangkat || "",
@@ -113,8 +115,8 @@ export const fromApiSpdItem = (item: any) => {
 
 export const toApiSpdPayload = (payload: any) => ({
   orderer_name: payload.pejabatPemberi ?? payload.orderer_name ?? "",
-  orderer_nip: payload.ordererNip ?? "",
-  orderer_position: payload.ordererPosition ?? "",
+  orderer_nip: payload.ordererNip ?? payload.orderer_nip ?? "",
+  orderer_position: payload.ordererPosition ?? payload.orderer_position ?? "",
   employee_name: payload.nama ?? payload.employee_name ?? "",
   employee_nip: payload.nip ?? payload.employee_nip ?? "",
   employee_rank: payload.pangkat ?? payload.employee_rank ?? "",
@@ -155,7 +157,8 @@ export const updateSpd = async (id: number, payload: any) => {
 };
 
 export const deleteSpd = async (id: number) => {
-  const res = await api.delete(`/spd/${id}`);
+  // Menggunakan POST dengan method spoofing untuk mengakali bug PHP 8.2 pada package Symfony
+  const res = await api.post(`/spd/${id}`, { _method: "DELETE" });
   return res.data;
 };
 
@@ -833,33 +836,3 @@ export const deleteAdminUser = async (id: number) => {
   const res = await api.delete(`/admin/users/${id}`);
   return res.data;
 };
-
-// ==========================================
-// 10. Surat Perjalanan Dinas (SPD)
-// ==========================================
-export const getSpdList = async () => {
-  const res = await api.get("/spd");
-  return res.data;
-};
-
-export const getSpdById = async (id: number) => {
-  const res = await api.get(`/spd/${id}`);
-  return res.data;
-};
-
-export const createSpd = async (payload: any) => {
-  const res = await api.post("/spd", payload);
-  return res.data;
-};
-
-export const updateSpd = async (id: number, payload: any) => {
-  const res = await api.put(`/spd/${id}`, payload);
-  return res.data;
-};
-
-export const deleteSpd = async (id: number) => {
-  // Menggunakan POST dengan method spoofing untuk mengakali bug PHP 8.2 pada package Symfony
-  const res = await api.post(`/spd/${id}`, { _method: "DELETE" });
-  return res.data;
-};
-
