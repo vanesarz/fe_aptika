@@ -113,6 +113,43 @@ export const fromApiSpdItem = (item: any) => {
   };
 };
 
+// Mapper untuk format API baru (detail-perjalanan)
+export const fromApiDetailPerjalanan = (item: any) => {
+  const source = item?.data && typeof item.data === "object" && !Array.isArray(item.data) ? item.data : item;
+  const status = String(source?.status || "belum_selesai");
+  const displayStatus = status === "selesai" ? "SELESAI" : "BELUM SELESAI";
+
+  return {
+    id: source?.id,
+    travelCode: source?.travel_code || "",
+    kegiatan: source?.kegiatan || "",
+    subKegiatan: source?.sub_kegiatan || "",
+    tujuan: source?.tujuan || "",
+    tanggalBerangkat: source?.tanggal_berangkat || "",
+    tanggalKembali: source?.tanggal_kembali || "",
+    uangHarian: source?.uang_harian || 0,
+    alatAngkutan: source?.alat_angkutan || "",
+    deskripsi: source?.deskripsi || "",
+    status: displayStatus,
+    rawStatus: status,
+    rekening: source?.rekening || null,
+    peserta: (source?.peserta || []).map((p: any) => ({
+      id: p?.id,
+      nomorSpd: p?.nomor_spd || "",
+      lamaHari: p?.lama_hari || 0,
+      totalUang: p?.total_uang || 0,
+      pegawai: p?.pegawai || null,
+    })),
+    // Field compat dengan komponen lama
+    nama: source?.peserta?.[0]?.pegawai?.nama || "",
+    nip: source?.peserta?.[0]?.pegawai?.nip || "",
+    jabatan: source?.peserta?.[0]?.pegawai?.jabatan || "",
+    maksud: source?.deskripsi || "",
+    tglMulai: source?.tanggal_berangkat || "",
+    tglSelesai: source?.tanggal_kembali || "",
+  };
+};
+
 export const toApiSpdPayload = (payload: any) => ({
   orderer_name: payload.pejabatPemberi ?? payload.orderer_name ?? "",
   orderer_nip: payload.ordererNip ?? payload.orderer_nip ?? "",
@@ -166,6 +203,58 @@ export const getSpdStats = async () => {
   const res = await api.get("/spd/stats");
   return res.data;
 };
+
+// ─── SPD DETAIL PERJALANAN (API Baru) ──────────────────────
+export const getDetailPerjalananList = async (params?: { search?: string }) => {
+  const res = await api.get("/spd/detail-perjalanan", { params });
+  return res.data;
+};
+
+export const getDetailPerjalananById = async (id: number) => {
+  const res = await api.get(`/spd/detail-perjalanan/${id}`);
+  return res.data;
+};
+
+export const createDetailPerjalanan = async (payload: any) => {
+  const res = await api.post("/spd/detail-perjalanan", payload);
+  return res.data;
+};
+
+export const updateDetailPerjalanan = async (id: number, payload: any) => {
+  const res = await api.put(`/spd/detail-perjalanan/${id}`, payload);
+  return res.data;
+};
+
+export const updateDetailPerjalananStatus = async (id: number, status: "belum_selesai" | "selesai") => {
+  const res = await api.patch(`/spd/detail-perjalanan/${id}/status`, { status });
+  return res.data;
+};
+
+export const deleteDetailPerjalanan = async (id: number) => {
+  const res = await api.delete(`/spd/detail-perjalanan/${id}`);
+  return res.data;
+};
+ 
+export const getPegawaiList = async () => {
+  const res = await api.get("/spd/pegawai");
+  return res.data;
+};
+
+export const createPegawai = async (payload: any) => {
+  const res = await api.post("/spd/pegawai", payload);
+  return res.data;
+};
+
+export const createSpdPeserta = async (payload: { detail_perjalanan_id: number; pegawai_id: number[] }) => {
+  const res = await api.post("/spd/spd-peserta", payload);
+  return res.data;
+};
+
+export const getRekeningList = async () => {
+  const res = await api.get("/spd/rekening");
+  return res.data;
+};
+
 
 // ─── REPORTS ─────────────────────────────────────────────
 export const getReports = async (team: string, year?: number) => {

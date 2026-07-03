@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getSpdById, fromApiSpdItem, updateSpd } from "@/services/api";
+import { getSpdById, fromApiSpdItem, updateSpd, getDetailPerjalananById, fromApiDetailPerjalanan, updateDetailPerjalananStatus } from "@/services/api";
 
 type VisumPreviewProps = {
   params: Promise<{ id: string }>;
@@ -36,10 +36,17 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await getSpdById(Number(id));
-        setSpd(fromApiSpdItem(res));
+        // Coba API baru (detail-perjalanan) terlebih dahulu
+        const res = await getDetailPerjalananById(Number(id));
+        setSpd(fromApiDetailPerjalanan(res));
       } catch {
-        setSpd(mockItems[id] || mockItems["1"]);
+        try {
+          // Fallback ke API lama
+          const res = await getSpdById(Number(id));
+          setSpd(fromApiSpdItem(res));
+        } catch {
+          setSpd(mockItems[id] || mockItems["1"]);
+        }
       } finally {
         setLoading(false);
       }
@@ -48,14 +55,20 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
   }, [id]);
 
   const handlePrint = async () => {
-    window.print();
     try {
-      if (spd) {
-        await updateSpd(Number(id), { ...spd, status: "completed" });
+      // Simpan status selesai ke database via API baru
+      await updateDetailPerjalananStatus(Number(id), "selesai");
+    } catch {
+      try {
+        // Fallback ke API lama jika API baru gagal
+        if (spd) {
+          await updateSpd(Number(id), { ...spd, status: "completed" });
+        }
+      } catch (err) {
+        console.error("Failed to update status:", err);
       }
-    } catch (err) {
-      console.error("Failed to update status:", err);
     }
+    window.print();
     window.location.href = "/spd";
   };
 
@@ -89,6 +102,9 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
     <>
       <style>{`
         @media print {
+          @page {
+            size: A4 landscape;
+          }
           body {
             background-color: white !important;
             margin: 0 !important;
@@ -101,8 +117,8 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
             border: none !important;
             box-shadow: none !important;
             margin: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
+            width: 297mm !important;
+            height: 210mm !important;
           }
         }
       `}</style>
@@ -207,84 +223,54 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
         <div className="print-container" style={{
           position: "relative",
           backgroundColor: "white",
-          width: "210mm",
-          height: "297mm",
+          width: "297mm",
+          height: "210mm",
           margin: "0 auto",
           border: "1px solid #cbd5e1",
           boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
-          backgroundImage: `
-            linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px)
-          `,
-          backgroundSize: "20px 20px",
           fontFamily: "Inter, sans-serif",
           boxSizing: "border-box",
           overflow: "hidden"
         }}>
-          {/* Watermark "Page 3" */}
-          <div style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            fontSize: "120px",
-            fontWeight: "800",
-            color: "#e2e8f0",
-            opacity: 0.8,
-            pointerEvents: "none",
-            zIndex: 1,
-            userSelect: "none"
-          }}>
-            Page 3
-          </div>
 
-          {/* Blue dashed vertical break line */}
+          {/* Left Signature Block (Main Area) */}
           <div style={{
             position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: "70%",
-            borderLeft: "2px dashed #3b82f6",
-            zIndex: 5
-          }} />
-
-          {/* Main Area Signature Block (Left side of dashed line) */}
-          <div style={{
-            position: "absolute",
-            top: "160px",
-            right: "33%",
-            width: "260px",
-            textAlign: "left",
-            fontSize: "13px",
-            color: "#1e293b",
-            lineHeight: "1.6",
+            top: "125px",
+            left: "58%",
+            width: "220px",
+            fontSize: "11px",
+            fontFamily: "Arial, sans-serif",
+            lineHeight: "1.7",
+            color: "#000",
             zIndex: 10
           }}>
-            <div>{lokasi}</div>
-            <div>{formatDateIndonesian(tglKedatangan)}</div>
-            <div style={{ marginTop: "6px" }}>{jabatan}</div>
-            <div style={{ height: "70px" }}></div>
-            <div style={{ fontWeight: "700" }}>{nama}</div>
+            <div>{lokasi || "Kota Cimahi"}</div>
+            <div>{formatDateIndonesian(tglKedatangan) || "26 November 2025"}</div>
+            <div style={{ visibility: "hidden" }}>-</div> {/* Empty row to align with NIP on the right */}
+            <div>{jabatan || "Front Desk Attendant"}</div>
+            <div style={{ height: "55px" }}></div>
+            <div style={{ fontWeight: "bold" }}>{nama || "Irna"}</div>
           </div>
-
-          {/* Stub Area Signature Block (Right side of dashed line) */}
+ 
+          {/* Right Signature Block (Stub Area) */}
           <div style={{
             position: "absolute",
-            top: "160px",
-            left: "73%",
-            width: "200px",
-            textAlign: "left",
-            fontSize: "12px",
-            color: "#1e293b",
-            lineHeight: "1.6",
+            top: "125px",
+            left: "82.5%",
+            width: "180px",
+            fontSize: "11px",
+            fontFamily: "Arial, sans-serif",
+            lineHeight: "1.7",
+            color: "#000",
             zIndex: 10
           }}>
-            <div>{lokasi}</div>
+            <div>{lokasi || "Kota Cimahi"}</div>
             <div>{spd?.tempatBerangkat || "Bandung"}</div>
-            <div>{nip}</div>
-            <div style={{ marginTop: "6px" }}>{jabatan}</div>
-            <div style={{ height: "50px" }}></div>
-            <div style={{ fontWeight: "700" }}>{nama}</div>
+            <div>{nip || "45989"}</div>
+            <div>{jabatan || "Front Desk Attendant"}</div>
+            <div style={{ height: "55px" }}></div>
+            <div style={{ fontWeight: "bold" }}>{nama || "Irna"}</div>
           </div>
         </div>
       </div>

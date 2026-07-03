@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid
 } from "recharts";
-import { getSpdList, deleteSpd, fromApiSpdItem } from "@/services/api";
+import { getSpdList, deleteSpd, fromApiSpdItem, getDetailPerjalananList, fromApiDetailPerjalanan, updateDetailPerjalananStatus, deleteDetailPerjalanan } from "@/services/api";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGS", "SEP", "OKT", "NOV", "DES"];
 
@@ -72,22 +72,39 @@ export default function SpdDashboardPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await getSpdList({ search: searchTerm });
+        // Coba gunakan API baru (detail-perjalanan) terlebih dahulu
+        const res = await getDetailPerjalananList();
         if (res?.data && res.data.length > 0) {
-          setSpdList(res.data.map(fromApiSpdItem));
-        } else {
-          let data = mockSpdData;
+          let data = res.data.map(fromApiDetailPerjalanan);
           if (searchTerm) {
             const term = searchTerm.toLowerCase();
-            data = data.filter(item =>
-              item.nama.toLowerCase().includes(term) ||
-              item.nip.includes(term) ||
-              item.tujuan.toLowerCase().includes(term)
+            data = data.filter((item: any) =>
+              (item.tujuan || "").toLowerCase().includes(term) ||
+              (item.deskripsi || "").toLowerCase().includes(term) ||
+              (item.travelCode || "").toLowerCase().includes(term)
             );
           }
-          setSpdList(data.map(fromApiSpdItem));
+          setSpdList(data);
+        } else {
+          // Fallback ke API lama
+          const res2 = await getSpdList({ search: searchTerm });
+          if (res2?.data && res2.data.length > 0) {
+            setSpdList(res2.data.map(fromApiSpdItem));
+          } else {
+            let data = mockSpdData;
+            if (searchTerm) {
+              const term = searchTerm.toLowerCase();
+              data = data.filter(item =>
+                item.nama.toLowerCase().includes(term) ||
+                item.nip.includes(term) ||
+                item.tujuan.toLowerCase().includes(term)
+              );
+            }
+            setSpdList(data.map(fromApiSpdItem));
+          }
         }
       } catch {
+        // Double fallback ke mock data jika semua API gagal
         let data = mockSpdData;
         if (searchTerm) {
           const term = searchTerm.toLowerCase();
@@ -109,10 +126,15 @@ export default function SpdDashboardPage() {
   const handleDelete = async (id: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus data usulan SPD ini?")) {
       try {
-        await deleteSpd(id);
+        // Coba delete via API baru terlebih dahulu
+        await deleteDetailPerjalanan(id);
         setSpdList(prev => prev.filter(item => item.id !== id));
       } catch {
-        // Fallback for mock data deletion
+        try {
+          await deleteSpd(id);
+        } catch {
+          // Fallback for mock data deletion
+        }
         setSpdList(prev => prev.filter(item => item.id !== id));
       }
     }
@@ -135,7 +157,7 @@ export default function SpdDashboardPage() {
 
   // Calculate statistics
   const totalSpd = spdList.length;
-  const drafCount = spdList.filter(item => item.status === "DRAF").length;
+  const drafCount = spdList.filter(item => item.status === "DRAF" || item.status === "BELUM SELESAI").length;
   const diajukanCount = spdList.filter(item => item.status === "DIAJUKAN").length;
   const disetujuiCount = spdList.filter(item => item.status === "DISETUJUI").length;
   const selesaiCount = spdList.filter(item => item.status === "SELESAI").length;
@@ -260,18 +282,26 @@ export default function SpdDashboardPage() {
                   return (
                     <tr key={item.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "12px 8px", color: "#64748b" }}>{index + 1}</td>
-                      <td style={{ padding: "12px 8px", color: "#0f2540", fontWeight: "600" }}>{item.id}</td>
+                      <td style={{ padding: "12px 8px", color: "#0f2540", fontWeight: "600" }}>{item.travelCode || item.id}</td>
                       <td style={{ padding: "12px 8px", color: "#334155" }}>{item.tujuan}</td>
                       <td style={{ padding: "12px 8px", color: "#334155", maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {item.maksud}
+                        {item.deskripsi || item.maksud}
                       </td>
                       <td style={{textAlign:"center"}}>
                         <input
                         type="checkbox"
                         checked={item.status==="SELESAI"}
-                        onChange={() => {
-                          setSelectedSpd(item);
-                          setShowConfirmModal(true);
+                        onChange={async () => {
+                          if (item.status === "SELESAI") return; // already completed, cannot uncheck
+                          try {
+                            await updateDetailPerjalananStatus(item.id, "selesai");
+                            // After successful update, navigate to the visum form page (first)
+                            router.push(`/spd/visum-form/${item.id}`);
+                          } catch {
+                            // If the new API fails, fall back to the old flow (show modal)
+                            setSelectedSpd(item);
+                            setShowConfirmModal(true);
+                          }
                         }}
                         style={{
                             width:18,
