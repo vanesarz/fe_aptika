@@ -108,21 +108,43 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
         /* Print Styles */
         @media print {
           @page {
-            size: ${docType === "spd" ? "landscape" : "portrait"};
+            margin: 10mm;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           body {
             background-color: white !important;
             color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          .no-print {
+          /* Sembunyikan sidebar, toolbar, dan elemen non-dokumen */
+          .no-print,
+          .sidebar-layout-wrapper,
+          nav,
+          aside {
             display: none !important;
+          }
+          /* Hapus layout flex agar konten cetak penuh */
+          .layout-root {
+            display: block !important;
+          }
+          .main-layout-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            background: white !important;
+            width: 100% !important;
           }
           .print-container-sp, .print-container-spd {
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
             width: 100% !important;
-            padding: 0 !important;
+            padding: 10mm !important;
+            min-height: unset !important;
           }
           .page-break {
             page-break-before: always !important;
