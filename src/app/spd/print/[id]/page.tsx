@@ -105,10 +105,11 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
   return (
     <>
       <style>{`
-        /* Print Styles */
+        /* Print Styles - SPD: A4 Landscape 1 page */
         @media print {
           @page {
-            margin: 10mm;
+            size: A4 landscape;
+            margin: 6mm;
           }
           * {
             -webkit-print-color-adjust: exact !important;
@@ -120,14 +121,12 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
             margin: 0 !important;
             padding: 0 !important;
           }
-          /* Sembunyikan sidebar, toolbar, dan elemen non-dokumen */
           .no-print,
           .sidebar-layout-wrapper,
           nav,
           aside {
             display: none !important;
           }
-          /* Hapus layout flex agar konten cetak penuh */
           .layout-root {
             display: block !important;
           }
@@ -138,13 +137,41 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
             background: white !important;
             width: 100% !important;
           }
-          .print-container-sp, .print-container-spd {
+          .print-container-sp {
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
             width: 100% !important;
-            padding: 10mm !important;
+            padding: 0 !important;
             min-height: unset !important;
+          }
+          .print-container-spd {
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            width: 100% !important;
+            padding: 0 !important;
+            min-height: unset !important;
+            font-size: 9px !important;
+            gap: 10px !important;
+          }
+          .print-container-spd .kop-surat-spd {
+            padding-bottom: 3px !important;
+            margin-bottom: 5px !important;
+          }
+          .print-container-spd img {
+            width: 45px !important;
+            height: 45px !important;
+          }
+          .print-container-spd .table-spd td {
+            padding: 2px 4px !important;
+          }
+          .print-container-spd .table-visum td {
+            padding: 3px 5px !important;
+            height: auto !important;
+          }
+          .print-container-spd > div > div:last-child {
+            margin-top: 5px !important;
           }
           .page-break {
             page-break-before: always !important;
@@ -708,14 +735,14 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
               </table>
 
               {/* Footer Signatures */}
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px", fontSize: "11px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "11px" }}>
                 <div></div>
                 <div style={{ width: "200px" }}>
                   <div>Dikeluarkan di: Bandung</div>
                   <div>Pada tanggal: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</div>
-                  <div style={{ borderBottom: "1px solid black", margin: "5px 0" }}></div>
+                  <div style={{ borderBottom: "1px solid black", margin: "4px 0" }}></div>
                   <div style={{ fontWeight: "bold" }}>Kepala Bidang APTIKA,</div>
-                  <div style={{ height: "50px" }}></div>
+                  <div style={{ height: "30px" }}></div>
                   <div style={{ fontWeight: "bold", textDecoration: "underline" }}>{data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T."}</div>
                   <div>NIP. {data?.raw?.orderer_nip || "197412081999031002"}</div>
                 </div>
@@ -729,10 +756,10 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 <tbody>
                   {/* ROW I: Berangkat dari tempat kedudukan */}
                   <tr>
-                    <td style={{ padding: "8px", height: "80px", width: "50%", border: "1px solid black" }}>
+                    <td style={{ padding: "5px", height: "50px", width: "50%", border: "1px solid black" }}>
                       <strong>I.</strong>
                     </td>
-                    <td style={{ padding: "8px", height: "80px", width: "50%", border: "1px solid black" }}>
+                    <td style={{ padding: "5px", height: "50px", width: "50%", border: "1px solid black" }}>
                       Berangkat dari : (Tempat Kedudukan) Bandung<br />
                       Ke : {data?.tempatTujuan}<br />
                       Pada Tanggal : {formatDateIndonesian(data?.tglMulai)}
@@ -741,57 +768,57 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
 
                   {/* ROW II–III */}
                   <tr>
-                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
+                    <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>II. Tiba di:</strong> {data?.tempatTujuan}<br />
                       <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglMulai)}<br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "25px" }}></div>
+                      <div style={{ height: "15px" }}></div>
                       <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
-                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
+                    <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>Berangkat dari:</strong> {data?.tempatTujuan}<br />
                       <strong>Ke:</strong> Bandung<br />
                       <strong>Pada tanggal:</strong> {formatDateIndonesian(data?.tglSelesai)}<br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "15px" }}></div>
+                      <div style={{ height: "8px" }}></div>
                       <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
                   </tr>
 
                   {/* ROW III–IV */}
                   <tr>
-                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
+                    <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>III. Tiba di:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "25px" }}></div>
+                      <div style={{ height: "15px" }}></div>
                       <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
-                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
+                    <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>Berangkat dari:</strong><br />
                       <strong>Ke:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "15px" }}></div>
+                      <div style={{ height: "8px" }}></div>
                       <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
                   </tr>
 
                   {/* ROW IV–V (extra stop) */}
                   <tr>
-                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
+                    <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>IV. Tiba di:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "25px" }}></div>
+                      <div style={{ height: "15px" }}></div>
                       <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
-                    <td style={{ padding: "8px", height: "85px", border: "1px solid black", verticalAlign: "top" }}>
+                    <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                       <strong>Berangkat dari:</strong><br />
                       <strong>Ke:</strong><br />
                       <strong>Pada tanggal:</strong><br />
                       <strong>Kepala:</strong>
-                      <div style={{ height: "15px" }}></div>
+                      <div style={{ height: "8px" }}></div>
                       <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
                     </td>
                   </tr>
