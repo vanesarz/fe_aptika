@@ -103,18 +103,26 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
       <style>{`
         @media print {
           @page {
-            margin: 5mm;
+            size: A4 landscape;
+            margin: 0;
           }
           body {
             background-color: white !important;
             margin: 0 !important;
             padding: 0 !important;
           }
+          /* Sembunyikan sidebar & toolbar */
           .no-print,
           .sidebar-layout-wrapper,
           nav,
           aside {
             display: none !important;
+          }
+          /* Hapus padding wrapper halaman */
+          .visum-page-wrapper {
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height: unset !important;
           }
           .layout-root {
             display: block !important;
@@ -126,17 +134,19 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
             background: white !important;
             width: 100% !important;
           }
+          /* Pertahankan dimensi A4 landscape agar absolute children tampil */
           .print-container {
             border: none !important;
             box-shadow: none !important;
-            margin: 0 auto !important;
-            width: 100% !important;
-            height: auto !important;
+            margin: 0 !important;
+            width: 297mm !important;
+            height: 210mm !important;
+            position: relative !important;
           }
         }
       `}</style>
 
-      <div style={{ padding: "32px", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
+      <div className="visum-page-wrapper" style={{ padding: "32px", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
         {/* Breadcrumb (Screen only) */}
         <div className="no-print" style={{ display: "flex", gap: "6px", fontSize: "12px", color: "#64748b", marginBottom: "24px" }}>
           <span>Surat Perjalanan Dinas</span>
