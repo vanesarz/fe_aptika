@@ -103,22 +103,35 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
       <style>{`
         @media print {
           @page {
-            size: A4 landscape;
+            margin: 5mm;
           }
           body {
             background-color: white !important;
             margin: 0 !important;
             padding: 0 !important;
           }
-          .no-print {
+          .no-print,
+          .sidebar-layout-wrapper,
+          nav,
+          aside {
             display: none !important;
+          }
+          .layout-root {
+            display: block !important;
+          }
+          .main-layout-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            background: white !important;
+            width: 100% !important;
           }
           .print-container {
             border: none !important;
             box-shadow: none !important;
-            margin: 0 !important;
-            width: 297mm !important;
-            height: 210mm !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            height: auto !important;
           }
         }
       `}</style>
