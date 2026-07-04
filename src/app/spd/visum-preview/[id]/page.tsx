@@ -270,8 +270,8 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
           {/* Left Signature Block (Main Area) */}
           <div style={{
             position: "absolute",
-            top: "125px",
-            left: "58%",
+            top: "58mm",
+            left: "170mm",
             width: "220px",
             fontSize: "11px",
             fontFamily: "Arial, sans-serif",
@@ -290,8 +290,8 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
           {/* Right Signature Block (Stub Area) */}
           <div style={{
             position: "absolute",
-            top: "125px",
-            left: "82.5%",
+            top: "58mm",
+            left: "247mm",
             width: "180px",
             fontSize: "11px",
             fontFamily: "Arial, sans-serif",
