@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { getSpdById, updateSpd, fromApiSpdItem } from "@/services/api";
+import { getSpdById, updateSpd, fromApiSpdItem, getDetailPerjalananById, fromApiDetailPerjalanan } from "@/services/api";
 
 type EditPageProps = {
   params: Promise<{ id: string }>;
@@ -41,20 +41,27 @@ export default function SpdEditPage({ params }: EditPageProps) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await getSpdById(Number(id));
-        const data = fromApiSpdItem(res);
+        let data;
+        try {
+          const res = await getDetailPerjalananById(Number(id));
+          data = fromApiDetailPerjalanan(res);
+        } catch {
+          const res = await getSpdById(Number(id));
+          data = fromApiSpdItem(res);
+        }
 
+        setNoSpd(data.noSpd || data.travelCode || "");
         setPejabatPemberi(data.pejabatPemberi || "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
-        setNamaPegawai(data.nama);
-        setNipPegawai(data.nip);
+        setNamaPegawai(data.nama || "");
+        setNipPegawai(data.nip || "");
         setPangkatPegawai(data.pangkat || "");
         setJabatanPegawai(data.jabatan || "");
-        setMaksudPerjalanan(data.maksud);
+        setMaksudPerjalanan(data.maksud || "");
         setAngkutan(data.angkutan || "Kendaraan Dinas");
         setTempatBerangkat(data.tempatBerangkat || "Bandung");
-        setTempatTujuan(data.tempatTujuan);
-        setTglMulai(data.tglMulai);
-        setTglSelesai(data.tglSelesai);
+        setTempatTujuan(data.tempatTujuan || "");
+        setTglMulai(data.tglMulai || "");
+        setTglSelesai(data.tglSelesai || "");
         setPengikut(data.pengikut || []);
 
         const budgetSplit = Number(data.anggaran || 0) / 3;
@@ -62,6 +69,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
         setUangTransport(budgetSplit || 0);
         setUangHotel(budgetSplit || 0);
       } catch {
+        setNoSpd("");
         setPejabatPemberi("Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
         setNamaPegawai("");
         setNipPegawai("");

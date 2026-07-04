@@ -236,8 +236,11 @@ export default function Sidebar() {
 
       <div className={`sidebar-wrap ${isOpen ? "open" : ""}`}>
 
-        {/* LOGO */}
-        <div className="sidebar-logo">
+        <div 
+          className="sidebar-logo" 
+          onClick={() => router.push("/rekayasaaplikasi/dashboard")}
+          style={{ cursor: "pointer" }}
+        >
           <div>
             <div className="sidebar-logo-name">Aptika Tools</div>
             <div className="sidebar-logo-sub">Rekap Data Aptika</div>
