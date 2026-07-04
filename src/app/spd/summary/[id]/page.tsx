@@ -210,6 +210,30 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
           </table>
         </div>
       </div>
+
+      {/* Action Buttons */}
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "16px", marginTop: "32px", padding: "20px 0", borderTop: "1px solid #e2e8f0" }}>
+        <button
+          onClick={() => router.push("/spd")}
+          style={{ padding: "10px 16px", backgroundColor: "transparent", border: "none", color: "#64748b", fontWeight: "600", fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => router.push(`/spd/print/${id}`)}
+          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", backgroundColor: "#0f2540", border: "none", borderRadius: "6px", color: "white", fontWeight: "600", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(15, 37, 64, 0.2)" }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          CETAK SP
+        </button>
+        <button
+          onClick={() => router.push(`/spd/visum-form/${id}`)}
+          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", backgroundColor: "#b91c1c", border: "none", borderRadius: "6px", color: "white", fontWeight: "600", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(220, 38, 38, 0.2)" }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          CETAK VISUM
+        </button>
+      </div>
     </div>
   );
 }
