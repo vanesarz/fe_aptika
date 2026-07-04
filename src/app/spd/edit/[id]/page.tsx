@@ -41,7 +41,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        let data;
+        let data: any;
         try {
           const res = await getDetailPerjalananById(Number(id));
           data = fromApiDetailPerjalanan(res);
