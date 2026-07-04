@@ -104,7 +104,11 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
         @media print {
           @page {
             size: A4 landscape;
-            margin: 0;
+            margin: 0mm;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           body {
             background-color: white !important;
@@ -123,6 +127,9 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
             padding: 0 !important;
             margin: 0 !important;
             min-height: unset !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
           }
           .layout-root {
             display: block !important;
@@ -134,14 +141,18 @@ function VisumPreviewContent({ params }: VisumPreviewProps) {
             background: white !important;
             width: 100% !important;
           }
-          /* Pertahankan dimensi A4 landscape agar absolute children tampil */
+          /* Fit tepat A4 landscape: 297 x 210mm */
           .print-container {
             border: none !important;
             box-shadow: none !important;
             margin: 0 !important;
             width: 297mm !important;
             height: 210mm !important;
+            min-width: unset !important;
+            max-width: 297mm !important;
             position: relative !important;
+            overflow: visible !important;
+            page-break-after: avoid !important;
           }
         }
       `}</style>
