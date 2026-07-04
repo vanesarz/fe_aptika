@@ -1,8 +1,23 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { getSpdById, updateSpd, fromApiSpdItem, getDetailPerjalananById, fromApiDetailPerjalanan } from "@/services/api";
+import {
+  getDetailPerjalananById,
+  fromApiDetailPerjalanan,
+  updateDetailPerjalanan,
+  getPegawaiList,
+  createPegawai,
+  createSpdPeserta,
+  getRekeningList,
+} from "@/services/api";
+
+type StaffRow = { nama: string; nip: string; pangkat: string; jabatan: string };
+
+const emptyStaff = (): StaffRow => ({ nama: "", nip: "", pangkat: "", jabatan: "" });
+
+const formatRupiah = (val: number) =>
+  val ? "Rp " + val.toLocaleString("id-ID") : "";
 
 type EditPageProps = {
   params: Promise<{ id: string }>;
@@ -10,81 +25,135 @@ type EditPageProps = {
 
 export default function SpdEditPage({ params }: EditPageProps) {
   const router = useRouter();
-  const { id } = use(params); // Next.js App Router dynamic route parameter resolver
+  const { id } = use(params);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form states
-  const [noSpd, setNoSpd] = useState("");
-  const [pejabatPemberi, setPejabatPemberi] = useState("");
-  const [namaPegawai, setNamaPegawai] = useState("");
-  const [nipPegawai, setNipPegawai] = useState("");
-  const [pangkatPegawai, setPangkatPegawai] = useState("");
-  const [jabatanPegawai, setJabatanPegawai] = useState("");
-  const [maksudPerjalanan, setMaksudPerjalanan] = useState("");
-  const [angkutan, setAngkutan] = useState("Kendaraan Dinas");
-  const [tempatBerangkat, setTempatBerangkat] = useState("Bandung");
-  const [tempatTujuan, setTempatTujuan] = useState("");
-  const [tglMulai, setTglMulai] = useState("");
-  const [tglSelesai, setTglSelesai] = useState("");
-  const [durasiHari, setDurasiHari] = useState(0);
+  // ── [1] DETAIL PERJALANAN ─────────────────────────────
+  const [kegiatan, setKegiatan] = useState("");
+  const [subKegiatan, setSubKegiatan] = useState("");
+  const [tujuan, setTujuan] = useState("");
+  const [tglBerangkat, setTglBerangkat] = useState("");
+  const [tglKembali, setTglKembali] = useState("");
+  const [uangHarian, setUangHarian] = useState<number>(0);
+  const [rekeningId, setRekeningId] = useState<number | "">("");
+  const [alatAngkutan, setAlatAngkutan] = useState("Kendaraan Dinas");
+  const [deskripsi, setDeskripsi] = useState("");
 
-  // Companions (Pengikut)
-  const [pengikut, setPengikut] = useState<any[]>([]);
+  // ── [2] KABID (opsional, hanya 1) ────────────────────
+  const [includeKabid, setIncludeKabid] = useState(false);
+  const [kabid, setKabid] = useState<StaffRow>(emptyStaff());
 
-  // Budget
-  const [uangHarian, setUangHarian] = useState(0);
-  const [uangTransport, setUangTransport] = useState(0);
-  const [uangHotel, setUangHotel] = useState(0);
+  // ── [3] STAFF (min 1, maks 4) ────────────────────────
+  const [staffList, setStaffList] = useState<StaffRow[]>([emptyStaff()]);
 
+  // ── Data dari API ─────────────────────────────────────
+  const [rekeningOptions, setRekeningOptions] = useState<any[]>([]);
+  const [pegawaiOptions, setPegawaiOptions] = useState<any[]>([]);
+  
+  // ── Store original detail ID for updates ───────────────
+  const [detailId, setDetailId] = useState<number | null>(null);
+
+  // ── Kalkulasi ─────────────────────────────────────────
+  const lamaHari =
+    tglBerangkat && tglKembali
+      ? Math.max(
+          1,
+          Math.ceil(
+            (new Date(tglKembali).getTime() - new Date(tglBerangkat).getTime()) /
+              86400000
+          ) + 1
+        )
+      : 0;
+
+  const totalKabid = includeKabid && lamaHari ? lamaHari * uangHarian : 0;
+  const validStaff = staffList.filter((s) => s.nama.trim());
+  const totalStaff = validStaff.length * lamaHari * uangHarian;
+  const grandTotal = totalKabid + totalStaff;
+
+  // ── Fetch data rekening & pegawai & detail perjalanan ─────────────────────
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        let data: any;
+        let rekeningData: any[] = [];
+
         try {
-          const res = await getDetailPerjalananById(Number(id));
-          data = fromApiDetailPerjalanan(res);
+          const rRes = await getRekeningList();
+          rekeningData = Array.isArray(rRes?.data) ? rRes.data : [];
+          setRekeningOptions(rekeningData);
         } catch {
-          const res = await getSpdById(Number(id));
-          data = fromApiSpdItem(res);
+          rekeningData = [];
+          setRekeningOptions([]);
+        }
+        try {
+          const pRes = await getPegawaiList();
+          setPegawaiOptions(Array.isArray(pRes?.data) ? pRes.data : []);
+        } catch {
+          setPegawaiOptions([]);
         }
 
-        setNoSpd(data.noSpd || data.travelCode || "");
-        setPejabatPemberi(data.pejabatPemberi || "Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
-        setNamaPegawai(data.nama || "");
-        setNipPegawai(data.nip || "");
-        setPangkatPegawai(data.pangkat || "");
-        setJabatanPegawai(data.jabatan || "");
-        setMaksudPerjalanan(data.maksud || "");
-        setAngkutan(data.angkutan || "Kendaraan Dinas");
-        setTempatBerangkat(data.tempatBerangkat || "Bandung");
-        setTempatTujuan(data.tempatTujuan || "");
-        setTglMulai(data.tglMulai || "");
-        setTglSelesai(data.tglSelesai || "");
-        setPengikut(data.pengikut || []);
+        // Fetch detail perjalanan
+        try {
+          const res = await getDetailPerjalananById(Number(id));
+          const data = fromApiDetailPerjalanan(res);
+          
+          setDetailId(data.id || Number(id));
+          setKegiatan(data.kegiatan || "");
+          setSubKegiatan(data.subKegiatan || "");
+          setTujuan(data.tujuan || "");
+          setTglBerangkat(data.tglMulai || "");
+          setTglKembali(data.tglSelesai || "");
+          setUangHarian(data.raw?.uang_harian || 0);
+          setAlatAngkutan(data.angkutan || "Kendaraan Dinas");
+          setDeskripsi(data.deskripsi || data.maksud || "");
+          
+          // Jika ada rekening code, cari di options
+          if (data.kodeRekening) {
+            const found = rekeningData.find(
+              (r: any) => r.kode_rekening === data.kodeRekening
+            );
 
-        const budgetSplit = Number(data.anggaran || 0) / 3;
-        setUangHarian(budgetSplit || 0);
-        setUangTransport(budgetSplit || 0);
-        setUangHotel(budgetSplit || 0);
-      } catch {
-        setNoSpd("");
-        setPejabatPemberi("Kepala Dinas Komunikasi dan Informatika Provinsi Jawa Barat");
-        setNamaPegawai("");
-        setNipPegawai("");
-        setPangkatPegawai("");
-        setJabatanPegawai("");
-        setMaksudPerjalanan("");
-        setAngkutan("Kendaraan Dinas");
-        setTempatBerangkat("Bandung");
-        setTempatTujuan("");
-        setTglMulai("");
-        setTglSelesai("");
-        setPengikut([]);
-        setUangHarian(0);
-        setUangTransport(0);
-        setUangHotel(0);
+            if (found) {
+              setRekeningId(found.id);
+            }
+          }
+
+          // Parse peserta data
+          const pesertaList = data.raw?.peserta || [];
+          
+          // Kabid adalah peserta pertama (jika ada dan role-nya kabid)
+          if (pesertaList.length > 0) {
+            const firstPeserta = pesertaList[0]?.pegawai || {};
+            if (firstPeserta.nama) {
+              setIncludeKabid(true);
+              setKabid({
+                nama: firstPeserta.nama || "",
+                nip: firstPeserta.nip || "",
+                pangkat: firstPeserta.pangkat || "",
+                jabatan: firstPeserta.jabatan || "",
+              });
+            }
+          }
+
+          // Staff adalah peserta ke-2 dan seterusnya
+          if (pesertaList.length > 1) {
+            const staffItems = pesertaList.slice(1).map((p: any) => ({
+              nama: p?.pegawai?.nama || "",
+              nip: p?.pegawai?.nip || "",
+              pangkat: p?.pegawai?.pangkat || "",
+              jabatan: p?.pegawai?.jabatan || "",
+            }));
+            setStaffList(staffItems.length > 0 ? staffItems : [emptyStaff()]);
+          } else {
+            setStaffList([emptyStaff()]);
+          }
+        } catch (err) {
+          console.error("Error loading detail perjalanan:", err);
+          setDetailId(null);
+        }
+      } catch (err) {
+        console.error("Error loading page data:", err);
       } finally {
         setLoading(false);
       }
@@ -92,406 +161,502 @@ export default function SpdEditPage({ params }: EditPageProps) {
     fetchData();
   }, [id]);
 
-  useEffect(() => {
-    if (tglMulai && tglSelesai) {
-      const dStart = new Date(tglMulai);
-      const dEnd = new Date(tglSelesai);
-      const diffTime = Math.abs(dEnd.getTime() - dStart.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      setDurasiHari(isNaN(diffDays) ? 0 : diffDays);
-    } else {
-      setDurasiHari(0);
+  // ── Staff handlers ────────────────────────────────────
+  const addStaff = () => {
+    if (staffList.length < 4) setStaffList((p) => [...p, emptyStaff()]);
+  };
+  const removeStaff = (i: number) =>
+    setStaffList((p) => p.filter((_, idx) => idx !== i));
+  const updateStaff = (i: number, field: keyof StaffRow, value: string) => {
+    const updated = [...staffList];
+    updated[i] = { ...updated[i], [field]: value };
+    setStaffList(updated);
+  };
+
+  // ── Auto-fill from pegawai list ───────────────────────
+  const autofillKabid = (nip: string) => {
+    const found = pegawaiOptions.find((p) => p.nip === nip);
+    if (found)
+      setKabid({ nama: found.nama, nip: found.nip, pangkat: found.pangkat, jabatan: found.jabatan });
+  };
+  const autofillStaff = (i: number, nip: string) => {
+    const found = pegawaiOptions.find((p) => p.nip === nip);
+    if (found) {
+      const updated = [...staffList];
+      updated[i] = { nama: found.nama, nip: found.nip, pangkat: found.pangkat, jabatan: found.jabatan };
+      setStaffList(updated);
     }
-  }, [tglMulai, tglSelesai]);
-
-  const addPengikut = () => {
-    setPengikut(prev => [...prev, { nama: "", tglLahir: "", keterangan: "" }]);
   };
 
-  const removePengikut = (index: number) => {
-    setPengikut(prev => prev.filter((_, idx) => idx !== index));
-  };
-
-  const handlePengikutChange = (index: number, field: string, value: string) => {
-    const updated = [...pengikut];
-    updated[index][field] = value;
-    setPengikut(updated);
-  };
-
-  const handleSubmit = async (status: string) => {
-    if (!namaPegawai || !nipPegawai || !tempatTujuan || !tglMulai || !tglSelesai) {
-      alert("Mohon lengkapi data pegawai utama, tempat tujuan, dan tanggal perjalanan!");
+  // ── Submit ────────────────────────────────────────────
+  const handleSubmit = async () => {
+    const validS = staffList.filter((s) => s.nama.trim() && s.nip.trim());
+    if (!kegiatan || !tujuan || !tglBerangkat || !tglKembali) {
+      alert("Mohon lengkapi data detail perjalanan!");
       return;
     }
-
+    if (validS.length < 1) {
+      alert("Minimal 1 staff harus diisi!");
+      return;
+    }
+    if (!detailId) {
+      alert("ID detail perjalanan tidak ditemukan!");
+      return;
+    }
+    
     setSubmitting(true);
-    const payload = {
-      noSpd,
-      pejabatPemberi,
-      nama: namaPegawai,
-      nip: nipPegawai,
-      pangkat: pangkatPegawai,
-      jabatan: jabatanPegawai,
-      maksud: maksudPerjalanan,
-      angkutan,
-      tempatBerangkat,
-      asal: tempatBerangkat,          // alias backend
-      tempatTujuan,
-      tujuan: tempatTujuan,           // alias backend
-      tglMulai,
-      tglSelesai,
-      durasi: durasiHari,
-      pengikut: JSON.stringify(pengikut),
-      uangHarian: Number(uangHarian),
-      uangTransport: Number(uangTransport),
-      uangHotel: Number(uangHotel),
-      anggaran: Number(uangHarian) + Number(uangTransport) + Number(uangHotel),
-      status
-    };
-
     try {
-      await updateSpd(Number(id), payload);
-      alert("Data usulan SPD berhasil diperbarui.");
+      // Update detail perjalanan payload
+      const updatePayload: any = {
+        kegiatan,
+        sub_kegiatan: subKegiatan || kegiatan,
+        tujuan,
+        tanggal_berangkat: tglBerangkat,
+        tanggal_kembali: tglKembali,
+        uang_harian: uangHarian,
+        alat_angkutan: alatAngkutan,
+        deskripsi,
+      };
+      if (rekeningId) updatePayload.rekening_id = rekeningId;
+
+      await updateDetailPerjalanan(detailId, updatePayload);
+
+      // Update peserta jika ada perubahan
+      // Get or create pegawai IDs
+      const pRes = await getPegawaiList();
+      const currentList: any[] = Array.isArray(pRes?.data) ? pRes.data : [];
+
+      const getOrCreatePegawai = async (row: StaffRow, role: "kabid" | "staff") => {
+        const existing = currentList.find((p) => p.nip === row.nip);
+        if (existing) return existing.id as number;
+        const created = await createPegawai({
+          nama: row.nama,
+          nip: row.nip,
+          pangkat: row.pangkat || "Golongan III",
+          jabatan: row.jabatan || (role === "kabid" ? "Kepala Bidang" : "Staf"),
+          tanggal_lahir: "1990-01-01",
+          role,
+        });
+        return (created?.data?.id ?? created?.id) as number;
+      };
+
+      const participantIds: number[] = [];
+
+      if (includeKabid && kabid.nama && kabid.nip) {
+        const id = await getOrCreatePegawai(kabid, "kabid");
+        participantIds.push(id);
+      }
+      for (const s of validS) {
+        const id = await getOrCreatePegawai(s, "staff");
+        participantIds.push(id);
+      }
+
+      // Update peserta if needed
+      if (participantIds.length > 0) {
+        await createSpdPeserta({ detail_perjalanan_id: detailId, pegawai_id: participantIds });
+      }
+
+      alert("Usulan SPD berhasil diperbarui!");
       router.push("/spd");
-    } catch {
-      alert("Data usulan SPD berhasil diperbarui (Demo Mode).");
-      router.push("/spd");
+    } catch (err: any) {
+      console.error(err);
+      alert("Gagal memperbarui usulan SPD. Periksa koneksi dan coba lagi.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  // ── Styles ─────────────────────────────────────────────
+  const card: React.CSSProperties = {
+    backgroundColor: "white",
+    padding: "24px",
+    borderRadius: "12px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+  };
+  const sectionTitle: React.CSSProperties = {
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#0f2540",
+    borderBottom: "2px solid #f1f5f9",
+    paddingBottom: "10px",
+    marginBottom: "20px",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  };
+  const label: React.CSSProperties = {
+    display: "block",
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#475569",
+    marginBottom: "5px",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+  };
+  const input: React.CSSProperties = {
+    width: "100%",
+    padding: "10px 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+    color: "#0f2540",
+    backgroundColor: "white",
+    transition: "border-color 0.15s",
+    boxSizing: "border-box",
+  };
+  const select: React.CSSProperties = { ...input, cursor: "pointer" };
+  const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
+  const grid4: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "12px" };
+
   if (loading) {
-    return <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>Loading data usulan SPD...</div>;
+    return <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>Memuat data usulan SPD...</div>;
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "900px", margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+    <div style={{ padding: "24px 32px", maxWidth: "960px", margin: "0 auto", fontFamily: "Inter, sans-serif" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "28px" }}>
         <button
           onClick={() => router.push("/spd")}
-          style={{
-            backgroundColor: "white",
-            border: "1px solid #cbd5e1",
-            color: "#475569",
-            padding: "8px 12px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "600"
-          }}
+          style={{ backgroundColor: "white", border: "1px solid #e2e8f0", color: "#475569", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}
         >
-          &larr; Kembali
+          ← Kembali
         </button>
         <div>
-          <h1 style={{ fontSize: "20px", fontWeight: "800", color: "#0f2540" }}>Edit Pengajuan Usulan SPD</h1>
-          <p style={{ fontSize: "13px", color: "#64748b" }}>Perbarui detail usulan perjalanan dinas ID: #{id}</p>
+          <h1 style={{ fontSize: "22px", fontWeight: "800", color: "#0f2540", margin: 0 }}>
+            Edit Usulan SPD
+          </h1>
+          <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0" }}>
+            Perbarui data Surat Perjalanan Dinas ID: #{id}
+          </p>
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        
-        {/* SECTION 1: Detail Pemberi & Penerima */}
-        <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-          <h2 style={{ fontSize: "15px", fontWeight: "700", color: "#0f2540", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px", marginBottom: "16px" }}>
-            1. Pihak Terlibat
-          </h2>
-          
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Nomor Surat</label>
-              <input
-                type="text"
-                placeholder="Contoh: 1818/KOM.03.01.08/APTIKA"
-                value={noSpd}
-                onChange={(e) => setNoSpd(e.target.value)}
-                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-              />
-            </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
-            <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Pejabat Pemberi Perintah</label>
-              <input
-                type="text"
-                value={pejabatPemberi}
-                onChange={(e) => setPejabatPemberi(e.target.value)}
-                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-              />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Nama Pegawai yang Diperintah</label>
-                <input
-                  type="text"
-                  value={namaPegawai}
-                  onChange={(e) => setNamaPegawai(e.target.value)}
-                  style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>NIP Pegawai</label>
-                <input
-                  type="text"
-                  value={nipPegawai}
-                  onChange={(e) => setNipPegawai(e.target.value)}
-                  style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Pangkat / Golongan</label>
-                <input
-                  type="text"
-                  value={pangkatPegawai}
-                  onChange={(e) => setPangkatPegawai(e.target.value)}
-                  style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Jabatan / Instansi</label>
-                <input
-                  type="text"
-                  value={jabatanPegawai}
-                  onChange={(e) => setJabatanPegawai(e.target.value)}
-                  style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 2: Detail Perjalanan */}
-        <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-          <h2 style={{ fontSize: "15px", fontWeight: "700", color: "#0f2540", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px", marginBottom: "16px" }}>
-            2. Rincian Perjalanan
+        {/* ═══════════════════════════════════════════════ */}
+        {/* SECTION 1: Detail Perjalanan                   */}
+        {/* ═══════════════════════════════════════════════ */}
+        <div style={card}>
+          <h2 style={sectionTitle}>
+            <span style={{ background: "#0f2540", color: "white", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>1</span>
+            Detail Perjalanan Dinas
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Kegiatan & Sub Kegiatan */}
+            <div style={grid2}>
+              <div>
+                <label style={label}>Kegiatan <span style={{ color: "red" }}>*</span></label>
+                <input style={input} placeholder="Contoh: Workshop AI Nasional" value={kegiatan} onChange={(e) => setKegiatan(e.target.value)} />
+              </div>
+              <div>
+                <label style={label}>Sub Kegiatan</label>
+                <input style={input} placeholder="Contoh: Pelatihan Penggunaan AI" value={subKegiatan} onChange={(e) => setSubKegiatan(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Tujuan */}
             <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Maksud Perjalanan Dinas</label>
-              <textarea
-                rows={3}
-                value={maksudPerjalanan}
-                onChange={(e) => setMaksudPerjalanan(e.target.value)}
-                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none", resize: "none" }}
-              />
+              <label style={label}>Tujuan (Instansi / Kota) <span style={{ color: "red" }}>*</span></label>
+              <input style={input} placeholder="Contoh: Kementerian Kominfo RI, Jakarta" value={tujuan} onChange={(e) => setTujuan(e.target.value)} />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            {/* Tanggal & Durasi */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "16px", alignItems: "end" }}>
               <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Tempat Berangkat</label>
-                <input
-                  type="text"
-                  value={tempatBerangkat}
-                  onChange={(e) => setTempatBerangkat(e.target.value)}
-                  style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
+                <label style={label}>Tanggal Berangkat <span style={{ color: "red" }}>*</span></label>
+                <input style={input} type="date" value={tglBerangkat} onChange={(e) => setTglBerangkat(e.target.value)} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Tempat Tujuan</label>
-                <input
-                  type="text"
-                  value={tempatTujuan}
-                  onChange={(e) => setTempatTujuan(e.target.value)}
-                  style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
+                <label style={label}>Tanggal Kembali <span style={{ color: "red" }}>*</span></label>
+                <input style={input} type="date" value={tglKembali} min={tglBerangkat} onChange={(e) => setTglKembali(e.target.value)} />
+              </div>
+              <div style={{ paddingBottom: "10px", textAlign: "center" }}>
+                <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "2px" }}>Durasi</div>
+                <div style={{ fontSize: "22px", fontWeight: "800", color: lamaHari > 0 ? "#1d4ed8" : "#cbd5e1" }}>
+                  {lamaHari > 0 ? `${lamaHari} Hari` : "—"}
+                </div>
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "16px" }}>
+            {/* Uang Harian & Rekening & Angkutan */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr", gap: "16px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Alat Transportasi</label>
-                <select
-                  value={angkutan}
-                  onChange={(e) => setAngkutan(e.target.value)}
-                  style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none", backgroundColor: "white" }}
-                >
-                  <option value="Kendaraan Dinas">Kendaraan Dinas</option>
-                  <option value="Pesawat Udara">Pesawat Udara</option>
-                  <option value="Kereta Api">Kereta Api</option>
-                  <option value="Kendaraan Darat Lainnya">Kendaraan Darat Lainnya</option>
+                <label style={label}>Uang Harian (Rp)</label>
+                <input
+                  style={input}
+                  type="number"
+                  min={0}
+                  placeholder="450000"
+                  value={uangHarian || ""}
+                  onChange={(e) => setUangHarian(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label style={label}>Kode Rekening</label>
+                <select style={select} value={rekeningId} onChange={(e) => setRekeningId(e.target.value ? Number(e.target.value) : "")}>
+                  <option value="">— Pilih Rekening —</option>
+                  {rekeningOptions.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.kode_rekening} · {r.nomor_rekening} · {r.nama_rekening}
+                    </option>
+                  ))}
                 </select>
               </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 0.5fr", gap: "12px", alignItems: "end" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Tgl Mulai</label>
-                  <input
-                    type="date"
-                    value={tglMulai}
-                    onChange={(e) => setTglMulai(e.target.value)}
-                    style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Tgl Selesai</label>
-                  <input
-                    type="date"
-                    value={tglSelesai}
-                    onChange={(e) => setTglSelesai(e.target.value)}
-                    style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                  />
-                </div>
-                <div style={{ paddingBottom: "10px", fontWeight: "700", color: "#1d4ed8", fontSize: "15px" }}>
-                  {durasiHari} Hari
-                </div>
+              <div>
+                <label style={label}>Alat Angkutan</label>
+                <select style={select} value={alatAngkutan} onChange={(e) => setAlatAngkutan(e.target.value)}>
+                  <option>Kendaraan Dinas</option>
+                  <option>Pesawat Udara</option>
+                  <option>Kereta Api</option>
+                  <option>Kapal Laut</option>
+                  <option>Kendaraan Darat Lainnya</option>
+                </select>
               </div>
+            </div>
+
+            {/* Deskripsi */}
+            <div>
+              <label style={label}>Deskripsi / Maksud Perjalanan</label>
+              <textarea
+                style={{ ...input, resize: "none" }}
+                rows={3}
+                placeholder="Tuliskan ringkasan tujuan dan agenda perjalanan dinas..."
+                value={deskripsi}
+                onChange={(e) => setDeskripsi(e.target.value)}
+              />
             </div>
           </div>
         </div>
 
-        {/* SECTION 3: Pengikut */}
-        <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px", marginBottom: "16px" }}>
-            <h2 style={{ fontSize: "15px", fontWeight: "700", color: "#0f2540" }}>3. Pengikut Perjalanan (Opsional)</h2>
-            <button
-              type="button"
-              onClick={addPengikut}
+        {/* ═══════════════════════════════════════════════ */}
+        {/* SECTION 2: Kabid (Opsional, hanya 1)          */}
+        {/* ═══════════════════════════════════════════════ */}
+        <div style={card}>
+          <h2 style={sectionTitle}>
+            <span style={{ background: "#7c3aed", color: "white", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>2</span>
+            SPD Kepala Bidang (Kabid)
+            <span style={{ marginLeft: "auto", fontSize: "12px", fontWeight: 500, color: "#64748b" }}>Opsional</span>
+          </h2>
+
+          {/* Toggle */}
+          <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: includeKabid ? "20px" : "0", cursor: "pointer", userSelect: "none" }}>
+            <div
+              onClick={() => setIncludeKabid(!includeKabid)}
               style={{
-                backgroundColor: "#f1f5f9",
-                border: "1px solid #cbd5e1",
-                color: "#475569",
-                padding: "4px 10px",
-                borderRadius: "6px",
-                fontSize: "12px",
-                fontWeight: "700",
-                cursor: "pointer"
+                width: 44, height: 24, borderRadius: 12,
+                backgroundColor: includeKabid ? "#7c3aed" : "#cbd5e1",
+                position: "relative", cursor: "pointer", transition: "background 0.2s",
               }}
             >
-              + Tambah Pengikut
-            </button>
-          </div>
+              <div style={{
+                position: "absolute", top: 3, left: includeKabid ? 23 : 3,
+                width: 18, height: 18, borderRadius: "50%", background: "white",
+                transition: "left 0.2s",
+              }} />
+            </div>
+            <span style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>
+              {includeKabid ? "Kabid ikut dalam perjalanan ini" : "Kabid tidak ikut"}
+            </span>
+          </label>
 
-          {pengikut.length === 0 ? (
-            <p style={{ textAlign: "center", padding: "12px", color: "#94a3b8", fontSize: "13px" }}>Tidak ada pengikut perjalanan.</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {pengikut.map((item, idx) => (
-                <div key={idx} style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr auto", gap: "12px", alignItems: "center" }}>
-                  <input
-                    type="text"
-                    value={item.nama}
-                    onChange={(e) => handlePengikutChange(idx, "nama", e.target.value)}
-                    style={{ padding: "8px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "13px", outline: "none" }}
-                  />
-                  <input
-                    type="date"
-                    value={item.tglLahir}
-                    onChange={(e) => handlePengikutChange(idx, "tglLahir", e.target.value)}
-                    style={{ padding: "8px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "13px", outline: "none" }}
-                  />
-                  <input
-                    type="text"
-                    value={item.keterangan}
-                    onChange={(e) => handlePengikutChange(idx, "keterangan", e.target.value)}
-                    style={{ padding: "8px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "13px", outline: "none" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePengikut(idx)}
-                    style={{
-                      backgroundColor: "#fecaca",
-                      color: "#dc2626",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: "700"
-                    }}
-                  >
-                    Hapus
-                  </button>
+          {includeKabid && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Autocomplete pilih dari daftar */}
+              <div>
+                <label style={label}>Pilih dari Daftar Pegawai (NIP)</label>
+                <select style={select} onChange={(e) => autofillKabid(e.target.value)} defaultValue="">
+                  <option value="">— Ketik manual atau pilih dari daftar —</option>
+                  {pegawaiOptions.filter((p) => p.role === "kabid").map((p) => (
+                    <option key={p.id} value={p.nip}>{p.nama} — {p.jabatan}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={grid2}>
+                <div>
+                  <label style={label}>Nama <span style={{ color: "red" }}>*</span></label>
+                  <input style={input} placeholder="Nama lengkap..." value={kabid.nama} onChange={(e) => setKabid({ ...kabid, nama: e.target.value })} />
                 </div>
-              ))}
+                <div>
+                  <label style={label}>NIP <span style={{ color: "red" }}>*</span></label>
+                  <input style={input} placeholder="18 digit NIP..." value={kabid.nip} onChange={(e) => setKabid({ ...kabid, nip: e.target.value })} />
+                </div>
+              </div>
+              <div style={grid2}>
+                <div>
+                  <label style={label}>Pangkat / Golongan</label>
+                  <input style={input} placeholder="Contoh: Pembina / IVa" value={kabid.pangkat} onChange={(e) => setKabid({ ...kabid, pangkat: e.target.value })} />
+                </div>
+                <div>
+                  <label style={label}>Jabatan</label>
+                  <input style={input} placeholder="Contoh: Kepala Bidang Aptika" value={kabid.jabatan} onChange={(e) => setKabid({ ...kabid, jabatan: e.target.value })} />
+                </div>
+              </div>
+              {lamaHari > 0 && uangHarian > 0 && (
+                <div style={{ backgroundColor: "#f5f3ff", border: "1px solid #ddd6fe", borderRadius: "8px", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "13px", color: "#5b21b6" }}>{lamaHari} hari × {formatRupiah(uangHarian)}</span>
+                  <span style={{ fontSize: "15px", fontWeight: "700", color: "#4c1d95" }}>{formatRupiah(totalKabid)}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* SECTION 4: Anggaran */}
-        <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-          <h2 style={{ fontSize: "15px", fontWeight: "700", color: "#0f2540", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px", marginBottom: "16px" }}>
-            4. Anggaran Perjalanan Dinas (Rencana)
+        {/* ═══════════════════════════════════════════════ */}
+        {/* SECTION 3: Staff (min 1, maks 4)              */}
+        {/* ═══════════════════════════════════════════════ */}
+        <div style={card}>
+          <h2 style={sectionTitle}>
+            <span style={{ background: "#0891b2", color: "white", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>3</span>
+            SPD Staff (Min. 1, Maks. 4)
+            <span style={{ marginLeft: "auto", fontSize: "12px", color: "#0891b2", fontWeight: "600" }}>
+              {staffList.length}/4 Staff · 1 No. SPD Bersama
+            </span>
           </h2>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Uang Harian (Total)</label>
-              <input
-                type="number"
-                value={uangHarian || ""}
-                onChange={(e) => setUangHarian(Number(e.target.value))}
-                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Biaya Transportasi</label>
-              <input
-                type="number"
-                value={uangTransport || ""}
-                onChange={(e) => setUangTransport(Number(e.target.value))}
-                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Biaya Hotel/Penginapan</label>
-              <input
-                type="number"
-                value={uangHotel || ""}
-                onChange={(e) => setUangHotel(Number(e.target.value))}
-                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-              />
-            </div>
-          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {staffList.map((s, i) => (
+              <div key={i} style={{ padding: "16px", border: "1px solid #e0f2fe", borderRadius: "10px", backgroundColor: "#f0f9ff", position: "relative" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#0369a1" }}>Staff #{i + 1}</span>
+                  {staffList.length > 1 && (
+                    <button
+                      onClick={() => removeStaff(i)}
+                      style={{ background: "none", border: "none", color: "#ef4444", fontSize: "18px", cursor: "pointer", padding: "0 4px" }}
+                    >×</button>
+                  )}
+                </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px", fontWeight: "700", color: "#0f2540", fontSize: "15px" }}>
-            Total Rencana Anggaran: Rp {(Number(uangHarian) + Number(uangTransport) + Number(uangHotel)).toLocaleString("id-ID")}
+                {/* Autocomplete */}
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={label}>Pilih dari Daftar Pegawai</label>
+                  <select style={select} onChange={(e) => autofillStaff(i, e.target.value)} defaultValue="">
+                    <option value="">— Pilih untuk auto-isi —</option>
+                    {pegawaiOptions.filter((p) => p.role === "staff").map((p) => (
+                      <option key={p.id} value={p.nip}>{p.nama} — {p.jabatan}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={grid2}>
+                  <div>
+                    <label style={label}>Nama <span style={{ color: "red" }}>*</span></label>
+                    <input style={input} placeholder="Nama lengkap..." value={s.nama} onChange={(e) => updateStaff(i, "nama", e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={label}>NIP <span style={{ color: "red" }}>*</span></label>
+                    <input style={input} placeholder="18 digit NIP..." value={s.nip} onChange={(e) => updateStaff(i, "nip", e.target.value)} />
+                  </div>
+                </div>
+                <div style={{ ...grid2, marginTop: "12px" }}>
+                  <div>
+                    <label style={label}>Pangkat / Golongan</label>
+                    <input style={input} placeholder="Contoh: Penata / IIIc" value={s.pangkat} onChange={(e) => updateStaff(i, "pangkat", e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={label}>Jabatan</label>
+                    <input style={input} placeholder="Contoh: Pranata Komputer" value={s.jabatan} onChange={(e) => updateStaff(i, "jabatan", e.target.value)} />
+                  </div>
+                </div>
+                {lamaHari > 0 && uangHarian > 0 && (
+                  <div style={{ marginTop: "12px", backgroundColor: "#e0f2fe", borderRadius: "6px", padding: "8px 12px", display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: "12px", color: "#0369a1" }}>{lamaHari} hari × {formatRupiah(uangHarian)}</span>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#0c4a6e" }}>{formatRupiah(lamaHari * uangHarian)}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {staffList.length < 4 && (
+              <button
+                onClick={addStaff}
+                style={{ border: "2px dashed #bae6fd", borderRadius: "10px", backgroundColor: "transparent", padding: "14px", color: "#0891b2", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}
+              >
+                + Tambah Staff (Maks. 4)
+              </button>
+            )}
           </div>
         </div>
 
-        {/* SUBMIT BUTTONS */}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "10px", marginBottom: "40px" }}>
+        {/* ═══════════════════════════════════════════════ */}
+        {/* RINGKASAN TOTAL                               */}
+        {/* ═══════════════════════════════════════════════ */}
+        {lamaHari > 0 && uangHarian > 0 && (
+          <div style={{ backgroundColor: "#0f2540", borderRadius: "12px", padding: "20px 24px", color: "white" }}>
+            <div style={{ fontSize: "13px", opacity: 0.7, marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Ringkasan Perhitungan</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
+                <span>Durasi Perjalanan</span>
+                <span style={{ fontWeight: "600" }}>{lamaHari} hari</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
+                <span>Uang Harian</span>
+                <span style={{ fontWeight: "600" }}>{formatRupiah(uangHarian)}</span>
+              </div>
+              {includeKabid && kabid.nama && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
+                  <span>Kabid ({kabid.nama || "—"})</span>
+                  <span style={{ fontWeight: "600" }}>{formatRupiah(totalKabid)}</span>
+                </div>
+              )}
+              {validStaff.length > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
+                  <span>Staff ({validStaff.length} orang)</span>
+                  <span style={{ fontWeight: "600" }}>{formatRupiah(totalStaff)}</span>
+                </div>
+              )}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: "8px", paddingTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: "800" }}>
+                <span>Total Anggaran</span>
+                <span style={{ color: "#7dd3fc" }}>{formatRupiah(grandTotal)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════ */}
+        {/* ACTION BUTTONS                                 */}
+        {/* ═══════════════════════════════════════════════ */}
+        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", paddingBottom: "40px" }}>
           <button
-            type="button"
-            disabled={submitting}
-            onClick={() => handleSubmit("DRAF")}
-            style={{
-              backgroundColor: "#f1f5f9",
-              border: "1px solid #cbd5e1",
-              color: "#475569",
-              padding: "12px 24px",
-              borderRadius: "8px",
-              fontWeight: "700",
-              cursor: "pointer",
-              fontSize: "14px"
-            }}
+            onClick={() => router.push("/spd")}
+            style={{ padding: "12px 24px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "white", color: "#475569", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}
           >
-            Simpan Perubahan
+            Batal
           </button>
-          
           <button
-            type="button"
             disabled={submitting}
-            onClick={() => handleSubmit("DIAJUKAN")}
+            onClick={handleSubmit}
             style={{
-              backgroundColor: "#1d4ed8",
-              color: "white",
-              padding: "12px 24px",
-              borderRadius: "8px",
+              padding: "12px 32px",
               border: "none",
+              borderRadius: "8px",
+              backgroundColor: submitting ? "#93c5fd" : "#0f2540",
+              color: "white",
               fontWeight: "700",
-              cursor: "pointer",
               fontSize: "14px",
-              boxShadow: "0 4px 6px -1px rgba(29, 78, 216, 0.2)"
+              cursor: submitting ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
             }}
           >
-            {submitting ? "Menyimpan..." : "Ajukan Kembali Usulan"}
+            {submitting && (
+              <svg style={{ animation: "spin 1s linear infinite" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+              </svg>
+            )}
+            {submitting ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
         </div>
-
       </div>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        input:focus, select:focus, textarea:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+      `}</style>
     </div>
   );
 }
