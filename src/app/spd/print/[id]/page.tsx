@@ -127,8 +127,8 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
     /kepala\s+bidang/i.test(p.jabatan || "") ||
     /kabid/i.test(p.jabatan || "");
 
-  const kabidList = allPeserta.filter(p => isKabid(p));
-  const staffList = allPeserta.filter(p => !isKabid(p));
+  const kabidList = allPeserta.filter((p: any) => isKabid(p));
+  const staffList = allPeserta.filter((p: any) => !isKabid(p));
   const hasKabid = kabidList.length > 0;
 
   const renderSpdDoc = (
