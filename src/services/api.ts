@@ -228,6 +228,22 @@ export const fromApiDetailPerjalanan = (item: any) => {
     nip: p?.pegawai?.nip || "",
     pangkat: p?.pegawai?.pangkat || "",
     jabatan: p?.pegawai?.jabatan || "",
+    role: p?.pegawai?.role || "staff",
+    nomorSpd: p?.nomor_spd || "",
+    tglLahir: p?.pegawai?.tanggal_lahir || "",
+    keterangan: p?.pegawai?.nip || "",
+  }));
+
+  const participants = pesertaList.map((p: any) => ({
+    id: p?.id,
+    nomorSpd: p?.nomor_spd || source?.travel_code || "",
+    nama: p?.pegawai?.nama || "",
+    nip: p?.pegawai?.nip || "",
+    pangkat: p?.pegawai?.pangkat || "",
+    jabatan: p?.pegawai?.jabatan || "",
+    role: p?.pegawai?.role || "staff",
+    tglLahir: p?.pegawai?.tanggal_lahir || "",
+    keterangan: p?.pegawai?.nip || "",
   }));
 
   return {
@@ -266,7 +282,9 @@ export const fromApiDetailPerjalanan = (item: any) => {
     nip: mainPeserta?.nip || "",
     pangkat: mainPeserta?.pangkat || "",
     jabatan: mainPeserta?.jabatan || "",
+    role: mainPeserta?.role || "staff",
     pengikut: followers,
+    participants: participants,
     kegiatan: source?.kegiatan || "",
     subKegiatan: source?.sub_kegiatan || "",
     kodeRekening: source?.rekening?.kode_rekening || "",
