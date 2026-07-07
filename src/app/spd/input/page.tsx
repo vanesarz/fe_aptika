@@ -179,8 +179,8 @@ export default function SpdInputPage() {
     } catch (err: any) {
       const apiData = err?.response?.data;
       const apiMsg =
-        apiData?.message ||
         (typeof apiData?.errors === "string" ? apiData.errors : JSON.stringify(apiData?.errors)) ||
+        apiData?.message ||
         err?.message ||
         "Unknown error";
       console.error(`[STEP: ${step}] Error:`, JSON.stringify(apiData, null, 2));
