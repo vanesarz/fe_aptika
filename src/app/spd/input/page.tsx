@@ -172,8 +172,14 @@ export default function SpdInputPage() {
       alert("Usulan SPD berhasil diajukan!");
       router.push("/spd");
     } catch (err: any) {
-      console.error(err);
-      alert("Gagal menyimpan usulan SPD. Periksa koneksi dan coba lagi.");
+      console.error("Submit error:", err);
+      const apiMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.errors ||
+        err?.message ||
+        "Unknown error";
+      console.error("API error detail:", err?.response?.data);
+      alert(`Gagal menyimpan usulan SPD.\n\nError: ${apiMsg}\n\nCek console (F12) untuk detail.`);
     } finally {
       setLoading(false);
     }
