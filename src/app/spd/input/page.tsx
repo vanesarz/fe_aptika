@@ -118,14 +118,17 @@ export default function SpdInputPage() {
       return;
     }
     setLoading(true);
+    let step = "init";
     try {
-      // 1. Cari/buat pegawai di DB, kumpulkan IDs
+      // Step 1: Ambil daftar pegawai
+      step = "getPegawaiList";
       const pRes = await getPegawaiList();
       const currentList: any[] = Array.isArray(pRes?.data) ? pRes.data : [];
 
       const getOrCreatePegawai = async (row: StaffRow, role: "kabid" | "staff") => {
         const existing = currentList.find((p) => p.nip === row.nip);
         if (existing) return existing.id as number;
+        step = `createPegawai(${row.nama})`;
         const created = await createPegawai({
           nama: row.nama,
           nip: row.nip,
@@ -148,7 +151,8 @@ export default function SpdInputPage() {
         participantIds.push(id);
       }
 
-      // 2. Buat detail perjalanan
+      // Step 2: Buat detail perjalanan
+      step = "createDetailPerjalanan";
       const detailPayload: any = {
         kegiatan,
         sub_kegiatan: subKegiatan || kegiatan,
@@ -164,7 +168,8 @@ export default function SpdInputPage() {
       const detailRes = await createDetailPerjalanan(detailPayload);
       const detailId: number = detailRes?.data?.id ?? detailRes?.id;
 
-      // 3. Daftarkan peserta
+      // Step 3: Daftarkan peserta
+      step = "createSpdPeserta";
       if (detailId && participantIds.length > 0) {
         await createSpdPeserta({ detail_perjalanan_id: detailId, pegawai_id: participantIds });
       }
@@ -172,14 +177,14 @@ export default function SpdInputPage() {
       alert("Usulan SPD berhasil diajukan!");
       router.push("/spd");
     } catch (err: any) {
-      console.error("Submit error:", err);
+      const apiData = err?.response?.data;
       const apiMsg =
-        err?.response?.data?.message ||
-        err?.response?.data?.errors ||
+        apiData?.message ||
+        (typeof apiData?.errors === "string" ? apiData.errors : JSON.stringify(apiData?.errors)) ||
         err?.message ||
         "Unknown error";
-      console.error("API error detail:", err?.response?.data);
-      alert(`Gagal menyimpan usulan SPD.\n\nError: ${apiMsg}\n\nCek console (F12) untuk detail.`);
+      console.error(`[STEP: ${step}] Error:`, JSON.stringify(apiData, null, 2));
+      alert(`Gagal di step: ${step}\n\nError: ${apiMsg}`);
     } finally {
       setLoading(false);
     }
