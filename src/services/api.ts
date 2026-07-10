@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
-  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -123,7 +123,7 @@ export const fromApiSpdItem = (item: any) => {
 
 export const toApiSpdPayload = (payload: any) => {
   const result: any = {};
-  
+
   if (payload.pejabatPemberi !== undefined || payload.orderer_name !== undefined) {
     result.orderer_name = payload.pejabatPemberi ?? payload.orderer_name ?? "";
   }
@@ -177,7 +177,7 @@ export const toApiSpdPayload = (payload: any) => {
   if (payload.status !== undefined) {
     result.status = normalizeSpdStatus(payload.status);
   }
-  
+
   return result;
 };
 
@@ -283,8 +283,8 @@ export const fromApiDetailPerjalanan = (item: any) => {
       source?.status === "selesai"
         ? "SELESAI"
         : source?.status === "belum_selesai"
-        ? "BELUM SELESAI"
-        : (source?.status || "").toUpperCase(),
+          ? "BELUM SELESAI"
+          : (source?.status || "").toUpperCase(),
     rawStatus: source?.status,
     nama: mainPeserta?.nama || "",
     nip: mainPeserta?.nip || "",
@@ -321,7 +321,7 @@ export const deleteDetailPerjalanan = async (id: number) => {
   const res = await api.delete(`/spd/detail-perjalanan/${id}`);
   return res.data;
 };
- 
+
 export const getPegawaiList = async () => {
   const res = await api.get("/spd/pegawai");
   return res.data;
