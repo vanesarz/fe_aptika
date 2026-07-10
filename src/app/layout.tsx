@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ToastProvider from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
   title: "APTIKA Tools",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body className="antialiased">
+        {children}
+        <ToastProvider />
+      </body>
     </html>
   );
 }

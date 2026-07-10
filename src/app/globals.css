@@ -1,11 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-plus-jakarta: 'Plus Jakarta Sans', sans-serif;
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #0f2540;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --accent: #38bdf8;
+  --sidebar-gradient: linear-gradient(175deg, #0b2146 0%, #112d60 50%, #1e40af 100%);
+  --border-color: #e2e8f0;
+}
+
 body {
-  background: #f8fafc;
-  color: #1f2937;
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-plus-jakarta);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer base {
@@ -14,13 +33,34 @@ body {
     text-decoration: none;
   }
   h1, h2, h3, h4, h5, h6 {
-    color: inherit;
+    color: var(--text-primary);
+    font-weight: 700;
   }
   button {
-    color: inherit;
+    font-family: var(--font-plus-jakarta);
   }
-  
-  :root {
-    color-scheme: light;
-  }
+}
+
+/* Custom Utilities */
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Micro-animations */
+.hover-scale {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+}
+.hover-scale:hover {
+  transform: translateY(-2px);
 }

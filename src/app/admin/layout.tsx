@@ -1,6 +1,6 @@
 "use client";
 
-import Sidebar from "@/components/layout/Sidebar";
+import MainLayout from "@/components/layout/MainLayout";
 
 export default function AdminLayout({
   children,
@@ -8,15 +8,11 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <Sidebar />
-      <main style={{
-        flex: 1,
-        overflowY: "auto",
-        backgroundColor: "#f1f5f9",
-      }}>
-        {children}
-      </main>
-    </div>
+    <MainLayout
+      title="Admin Panel"
+      subtitle="Manajemen hak akses & akun pengguna"
+    >
+      {children}
+    </MainLayout>
   );
 }

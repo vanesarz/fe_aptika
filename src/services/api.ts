@@ -1004,3 +1004,30 @@ export const deleteAdminUser = async (id: number) => {
   const res = await api.delete(`/admin/users/${id}`);
   return res.data;
 };
+
+// ==========================================
+// Projects & Tasks API (Manajemen Tugas Digital)
+// ==========================================
+
+export const getProjects = async () => {
+  const res = await api.get("/task-management/boards");
+  return res.data;
+};
+
+export const createProject = async (payload: { name: string; description: string; deadline: string }) => {
+  // Map frontend form properties to backend Board model
+  const backendPayload = {
+    name: payload.name,
+    description: payload.description,
+    end_date: payload.deadline,
+    status: "active",
+    visibility: "public"
+  };
+  const res = await api.post("/task-management/boards", backendPayload);
+  return res.data;
+};
+
+export const joinProject = async (id: number) => {
+  const res = await api.post(`/task-management/boards/${id}/members/join`);
+  return res.data;
+};
