@@ -2,6 +2,8 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api",
+  // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -21,6 +23,14 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      try {
+        // Clear cookie token so middleware won't keep redirecting back
+        if (typeof document !== "undefined") {
+          document.cookie = "token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+        }
+      } catch (e) {
+        // ignore
+      }
       window.location.href = "/login";
     }
     return Promise.reject(error);
