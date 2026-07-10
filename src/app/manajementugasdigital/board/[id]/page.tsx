@@ -19,7 +19,7 @@ import {
   Search,
   Users
 } from "lucide-react";
-import { getProjects } from "@/services/api";
+import { getProjects, getTasks, createTask, updateTaskStatus, deleteTask } from "@/services/api";
 import { Avatar } from "@/components/ui/Avatar";
 import { showToast } from "@/components/ui/Toast";
 import { Card } from "@/components/ui/Card";
@@ -34,17 +34,34 @@ interface Task {
   status: "todo" | "inprogress" | "inreview" | "done";
 }
 
-const INITIAL_TASKS: Task[] = [
-  { id: 1, title: "UI Design Refinement", code: "SCRUM-8", priority: "high", assignee: "BS", status: "todo" },
-  { id: 2, title: "Bug Fix: Login Issue", code: "SCRUM-9", priority: "high", assignee: "MA", status: "todo" },
-  { id: 3, title: "API Documentation", code: "SCRUM-10", priority: "low", assignee: "SA", status: "todo" },
-  { id: 4, title: "Frontend Development", code: "SCRUM-11", priority: "high", assignee: "SR", status: "inprogress" },
-  { id: 5, title: "Security Audit", code: "SCRUM-12", priority: "low", assignee: "MA", status: "inprogress" },
-  { id: 6, title: "Update Database", code: "SCRUM-7", priority: "high", assignee: "MA", status: "inreview" },
-  { id: 7, title: "Performance Optimization", code: "SCRUM-13", priority: "high", assignee: "SA", status: "inreview" },
-  { id: 8, title: "Sprint Planning", code: "SCRUM-5", priority: "high", assignee: "MA", status: "done" },
-  { id: 9, title: "Initial Research", code: "SCRUM-6", priority: "high", assignee: "SR", status: "done" },
-];
+const mapBackendToFrontendTask = (t: any): Task => {
+  let fStatus: Task["status"] = "todo";
+  if (t.status === "in_progress") fStatus = "inprogress";
+  else if (t.status === "in_review") fStatus = "inreview";
+  else if (t.status === "done") fStatus = "done";
+
+  let init = "UA";
+  if (t.assignee?.name) {
+    init = t.assignee.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+  } else if (t.creator?.name) {
+    init = t.creator.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+  }
+
+  return {
+    id: t.id,
+    title: t.title,
+    code: `SCRUM-${t.id}`,
+    priority: t.priority || "medium",
+    assignee: init,
+    status: fStatus
+  };
+};
+
+const mapFrontendToBackendStatus = (status: Task["status"]): "todo" | "in_progress" | "in_review" | "done" => {
+  if (status === "inprogress") return "in_progress";
+  if (status === "inreview") return "in_review";
+  return status;
+};
 
 export default function KanbanBoardPage() {
   const params = useParams();
@@ -60,7 +77,18 @@ export default function KanbanBoardPage() {
   const [activeInputColumn, setActiveInputColumn] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
 
-  const LOCAL_TASKS_KEY = `aptika_tasks_project_${projectId}`;
+  const fetchTasks = async () => {
+    try {
+      const res = await getTasks(projectId);
+      if (res && res.data) {
+        setTasks(res.data.map(mapBackendToFrontendTask));
+      } else {
+        setTasks([]);
+      }
+    } catch (err) {
+      console.error("Gagal mengambil data tugas:", err);
+    }
+  };
 
   useEffect(() => {
     const fetchProjectAndTasks = async () => {
@@ -73,17 +101,7 @@ export default function KanbanBoardPage() {
             setProjectName(currentProject.name);
           }
         }
-
-        // Fetch tasks
-        if (typeof window !== "undefined") {
-          const stored = localStorage.getItem(LOCAL_TASKS_KEY);
-          if (stored) {
-            setTasks(JSON.parse(stored));
-          } else {
-            localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(INITIAL_TASKS));
-            setTasks(INITIAL_TASKS);
-          }
-        }
+        await fetchTasks();
       } catch (err) {
         console.error(err);
       } finally {
@@ -91,64 +109,58 @@ export default function KanbanBoardPage() {
       }
     };
     fetchProjectAndTasks();
-  }, [projectId, LOCAL_TASKS_KEY]);
+  }, [projectId]);
 
-  const saveTasks = (newTasks: Task[]) => {
-    setTasks(newTasks);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(newTasks));
-    }
-  };
-
-  const handleCreateTask = (column: "todo" | "inprogress" | "inreview" | "done") => {
+  const handleCreateTask = async (column: "todo" | "inprogress" | "inreview" | "done") => {
     if (!newTaskTitle.trim()) {
       setActiveInputColumn(null);
       return;
     }
 
-    const newTaskNumber = tasks.length + 5;
-    const newTask: Task = {
-      id: Date.now(),
-      title: newTaskTitle.trim(),
-      code: `SCRUM-${newTaskNumber}`,
-      priority: "medium",
-      assignee: "UA", // User Aptika
-      status: column,
-    };
-
-    const updatedTasks = [...tasks, newTask];
-    saveTasks(updatedTasks);
-    setNewTaskTitle("");
-    setActiveInputColumn(null);
-    showToast.success(`Tugas "${newTask.title}" berhasil dibuat!`);
+    try {
+      await createTask({
+        board_id: projectId,
+        title: newTaskTitle.trim(),
+        priority: "medium",
+        status: mapFrontendToBackendStatus(column)
+      });
+      setNewTaskTitle("");
+      setActiveInputColumn(null);
+      showToast.success(`Tugas berhasil dibuat!`);
+      await fetchTasks();
+    } catch (err) {
+      console.error(err);
+      showToast.error("Gagal membuat tugas.");
+    }
   };
 
-  const handleToggleTaskStatus = (task: Task) => {
+  const handleToggleTaskStatus = async (task: Task) => {
     const nextStatusMap: Record<string, Task["status"]> = {
       todo: "done",
       inprogress: "done",
       inreview: "done",
       done: "todo",
     };
-    const updated = tasks.map((t) => {
-      if (t.id === task.id) {
-        return { ...t, status: nextStatusMap[t.status] };
-      }
-      return t;
-    });
-    saveTasks(updated);
-    showToast.success(`Tugas "${task.title}" dipindahkan.`);
+    const nextFStatus = nextStatusMap[task.status];
+    try {
+      await updateTaskStatus(task.id, mapFrontendToBackendStatus(nextFStatus));
+      showToast.success(`Tugas "${task.title}" dipindahkan.`);
+      await fetchTasks();
+    } catch (err) {
+      console.error(err);
+      showToast.error("Gagal memindahkan tugas.");
+    }
   };
 
-  const handleMoveStatus = (id: number, nextStatus: Task["status"]) => {
-    const updated = tasks.map((t) => {
-      if (t.id === id) {
-        return { ...t, status: nextStatus };
-      }
-      return t;
-    });
-    saveTasks(updated);
-    showToast.success("Tugas berhasil dipindahkan.");
+  const handleMoveStatus = async (id: number, nextStatus: Task["status"]) => {
+    try {
+      await updateTaskStatus(id, mapFrontendToBackendStatus(nextStatus));
+      showToast.success("Tugas berhasil dipindahkan.");
+      await fetchTasks();
+    } catch (err) {
+      console.error(err);
+      showToast.error("Gagal memindahkan tugas.");
+    }
   };
 
   // Filter tasks based on search

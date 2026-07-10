@@ -1,8 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
-  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -1029,5 +1028,33 @@ export const createProject = async (payload: { name: string; description: string
 
 export const joinProject = async (id: number) => {
   const res = await api.post(`/task-management/boards/${id}/members/join`);
+  return res.data;
+};
+
+export const getTasks = async (boardId: number) => {
+  const res = await api.get(`/task-management/tasks`, {
+    params: { board_id: boardId }
+  });
+  return res.data;
+};
+
+export const createTask = async (payload: {
+  board_id: number;
+  title: string;
+  priority: "low" | "medium" | "high";
+  status: "todo" | "in_progress" | "in_review" | "done";
+  description?: string;
+}) => {
+  const res = await api.post(`/task-management/tasks`, payload);
+  return res.data;
+};
+
+export const updateTaskStatus = async (id: number, status: "todo" | "in_progress" | "in_review" | "done") => {
+  const res = await api.patch(`/task-management/tasks/${id}/status`, { status });
+  return res.data;
+};
+
+export const deleteTask = async (id: number) => {
+  const res = await api.delete(`/task-management/tasks/${id}`);
   return res.data;
 };
