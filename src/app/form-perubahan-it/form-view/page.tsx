@@ -157,6 +157,7 @@ export default function FormView({ onSuccess }: { onSuccess: (data: any) => void
       });
 
       const result = await response.json();
+      console.log("RESULT BACKEND:", result);
       
       if (response.ok) {
         const selectedOpdName = opdList.find(o => o.id.toString() === perangkatDaerahId)?.name || '-';

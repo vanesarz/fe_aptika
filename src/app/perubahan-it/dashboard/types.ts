@@ -1,4 +1,4 @@
-export type StatusType = 'Menunggu' | 'Ditolak' | 'Selesai' | 'Disetujui';
+export type StatusType = 'Menunggu' | 'Ditolak' | 'Selesai' | 'Disetujui' | 'Pengerjaan';
 
 export interface FormPerubahanIT {
   id: number;

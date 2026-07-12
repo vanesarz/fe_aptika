@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormPerubahanIT } from './types';
-
+import { useRouter } from 'next/navigation';
 interface DetailViewProps {
   data: FormPerubahanIT;
   apiUrl?: string;
@@ -12,6 +12,7 @@ interface DetailViewProps {
 }
 
 export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
+  const router = useRouter();
   const [isPreview, setIsPreview] = useState(false);
   // State untuk handle error gambar tanda tangan (fallback ke placeholder)
   const [ttdImgError, setTtdImgError] = useState(false);
@@ -49,9 +50,9 @@ export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
   const currentStatus = (() => {
     const raw = localStatus ?? data.status;
     if (raw) {
-      if (raw.toLowerCase() === 'disetujui') return 'Disetujui';
-      if (raw.toLowerCase() === 'ditolak') return 'Ditolak';
-      if (raw.toLowerCase() === 'selesai') return 'Selesai';
+      if (raw.toLowerCase() === 'disetujui') return 'disetujui';
+      if (raw.toLowerCase() === 'ditolak') return 'ditolak';
+      if (raw.toLowerCase() === 'selesai') return 'selesai';
       return 'Menunggu';
     }
     return data.jenis_permohonan?.some((j) => j.includes('Deaktivasi') || j.includes('Tolak')) ? 'Ditolak' : 'Menunggu';
@@ -202,6 +203,36 @@ export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
     }
     return <div className="h-14" />;
   };
+
+console.log('Status:', currentStatus);
+
+console.log('Data:', data);
+const handleMulaiPengerjaan = async () => {
+  try {
+    const res = await fetch(
+      `http://localhost:8000/api/form-perubahan-it/${data.id}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'pengerjaan',
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error('Gagal mengubah status');
+    }
+
+    router.push(
+      `/form-perubahan-it/pengerjaan/${data.no_rfc}`
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   // --- TAMPILAN 2: PRINT PREVIEW (A4 Mockup) ---
   if (isPreview) {
@@ -374,12 +405,14 @@ export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
     );
   }
 
-  // --- TAMPILAN 1: NORMAL DASHBOARD DETAIL VIEW ---
+ // --- TAMPILAN 1: NORMAL DASHBOARD DETAIL VIEW ---
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-16 animate-in fade-in duration-300">
 
-      {/* Breadcrumb + Tombol Kembali */}
-      <div className="px-8 py-5 bg-white border-b border-slate-200">
+      {/* Breadcrumb + Tombol Kembali & Pengerjaan */}
+      <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-slate-200">
+        
+        {/* BAGIAN KIRI (Kembali & Breadcrumb) */}
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
@@ -395,6 +428,18 @@ export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
             <span className="font-semibold text-slate-800">Detail {data.no_rfc || `RFC-00${data.id}`}</span>
           </div>
         </div>
+
+        {/* BAGIAN KANAN (Tombol Pengerjaan Selanjutnya) */}
+        {currentStatus === 'disetujui' && (
+          <button
+            onClick={handleMulaiPengerjaan}
+            className="flex items-center gap-2 rounded-lg bg-[#113289] px-5 py-2 text-[13px] font-bold text-white shadow-sm hover:bg-[#0e276b] transition-colors"
+          >
+            Pengerjaan Selanjutnya
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" /></svg>
+          </button>
+        )}
+
       </div>
 
       <div className="max-w-6xl px-6 mx-auto mt-6 space-y-6">
@@ -414,7 +459,7 @@ export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>DITOLAK
               </span>
             )}
-            {(currentStatus === 'Disetujui' || currentStatus === 'Selesai') && (
+            {(currentStatus === 'disetujui' || currentStatus === 'selesai') && (
               <span className="flex items-center gap-2 px-3 py-1 text-xs font-bold tracking-wide text-green-600 bg-green-100 border border-green-200 rounded-full">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>DISETUJUI
               </span>

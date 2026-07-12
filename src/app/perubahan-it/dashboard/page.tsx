@@ -10,6 +10,8 @@ function inferStatus(r: FormPerubahanIT): StatusType {
   if (r.status) {
     if (r.status.toLowerCase() === 'disetujui') return 'Disetujui';
     if (r.status.toLowerCase() === 'ditolak') return 'Ditolak';
+    if (r.status.toLowerCase() === 'selesai') return 'Selesai';
+    if (r.status.toLowerCase() === 'pengerjaan') return 'Pengerjaan';
     return 'Menunggu';
   }
   const jp = r.jenis_permohonan ?? [];
@@ -207,21 +209,40 @@ export default function AdminPermohonanPage() {
                         <td className="px-6 py-4">{r.nama_perangkat_daerah || r.unit_kerja || '-'}</td>
                         <td className="px-6 py-4 text-slate-500">{r.email_dinas || '-'}</td>
                         <td className="px-6 py-4 text-center">
-                          {status === 'Menunggu' && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#D97706] text-[11px] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>Menunggu
-                            </span>
-                          )}
-                          {status === 'Ditolak' && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEE2E2] border border-[#FECACA] text-[#DC2626] text-[11px] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span>Ditolak
-                            </span>
-                          )}
-                          {(status === 'Disetujui' || status === 'Selesai') && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 border border-green-200 text-green-600 text-[11px] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Disetujui
-                            </span>
-                          )}
+{status === 'Menunggu' && (
+  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-100 border border-yellow-200 text-yellow-600 text-[11px] font-bold">
+    <span className="w-1.5 h-1.5 rounded-full bg-yellow-600"></span>
+    Menunggu
+  </span>
+)}
+
+{status === 'Disetujui' && (
+  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 border border-green-200 text-green-600 text-[11px] font-bold">
+    <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+    Disetujui
+  </span>
+)}
+
+{status === 'Pengerjaan' && (
+  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 border border-purple-200 text-purple-600 text-[11px] font-bold">
+    <span className="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
+    Pengerjaan
+  </span>
+)}
+
+{status === 'Selesai' && (
+  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-100 border border-cyan-200 text-cyan-600 text-[11px] font-bold">
+    <span className="w-1.5 h-1.5 rounded-full bg-cyan-600"></span>
+    Selesai
+  </span>
+)}
+
+{status === 'Ditolak' && (
+  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 border border-red-200 text-red-600 text-[11px] font-bold">
+    <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+    Ditolak
+  </span>
+)}
                         </td>
                         <td className="px-6 py-4 text-center">
                           {/* FIX: Panggil handleOpenDetail yang fetch data lengkap dari BE */}
