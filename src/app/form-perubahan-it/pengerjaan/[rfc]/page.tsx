@@ -19,6 +19,10 @@ export default function DetailPengerjaanAdmin() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [isSavingStatus, setIsSavingStatus] = useState(false);
 
+const [selectedAgent, setSelectedAgent] = useState("");
+const [assignNote, setAssignNote] = useState("");
+const [showAssignModal, setShowAssignModal] = useState(false);
+
   // Ambil data detail permohonan dari API Laravel
   const fetchTicketDetail = () => {
     fetch(`http://localhost:8000/api/form-perubahan-it/ticket/${rfc}`)
@@ -82,7 +86,51 @@ export default function DetailPengerjaanAdmin() {
   };
 
 
-  
+  const agents = [
+    "Frontend Developer",
+    "Backend Developer",
+    "Database Administrator",
+    "System Analyst",
+    "Network Engineer",
+
+];
+const handleAssign = async () => {
+  if (!selectedAgent) {
+    alert("Silakan pilih agen.");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `http://localhost:8000/api/form-perubahan-it/${ticket.id}/assign`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assigned_to: selectedAgent,
+          catatan: assignNote,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error();
+    }
+
+    setShowAssignModal(false);
+
+    setSelectedAgent("");
+    setAssignNote("");
+
+    fetchTicketDetail();
+
+    alert("Agen berhasil ditugaskan.");
+  } catch (err) {
+    alert("Gagal menugaskan agen.");
+  }
+};
 
   return (
     
@@ -192,7 +240,10 @@ export default function DetailPengerjaanAdmin() {
             </div>
             
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 rounded-lg bg-[#0F172A] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#1E293B]">
+              <button
+    onClick={() => setShowAssignModal(true)}
+    className="flex items-center gap-2 rounded-lg bg-[#0F172A] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#1E293B]"
+>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
                 Pilih Agen
               </button>
@@ -372,7 +423,98 @@ export default function DetailPengerjaanAdmin() {
           </div>
         </div>
       )}
+{showAssignModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
+    <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+
+      <div className="flex items-center justify-between border-b p-6">
+
+        <h3 className="text-lg font-bold">
+          Pilih Agen
+        </h3>
+
+        <button
+          onClick={() => setShowAssignModal(false)}
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div className="space-y-5 p-6">
+
+        <div>
+
+          <label className="mb-2 block text-sm font-semibold">
+            Agen
+          </label>
+
+          <select
+            value={selectedAgent}
+            onChange={(e) => setSelectedAgent(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 p-3"
+          >
+
+            <option value="">
+              -- Pilih Agen --
+            </option>
+
+            {agents.map((agent) => (
+
+              <option
+                key={agent}
+                value={agent}
+              >
+                {agent}
+              </option>
+
+            ))}
+
+          </select>
+
+        </div>
+
+        <div>
+
+          <label className="mb-2 block text-sm font-semibold">
+            Catatan
+          </label>
+
+          <textarea
+            rows={4}
+            value={assignNote}
+            onChange={(e) => setAssignNote(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 p-3"
+            placeholder="Catatan untuk agen..."
+          />
+
+        </div>
+
+      </div>
+
+      <div className="flex justify-end gap-3 border-t p-6">
+
+        <button
+          onClick={() => setShowAssignModal(false)}
+          className="rounded-lg border px-5 py-2"
+        >
+          Batal
+        </button>
+
+        <button
+          onClick={handleAssign}
+          className="rounded-lg bg-[#113289] px-6 py-2 text-white"
+        >
+          Simpan
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
     </div>
   );
 }
