@@ -32,6 +32,7 @@ export interface Project {
   members: { name: string; avatarUrl?: string }[];
   totalMembersCount: number;
   isJoined?: boolean;
+  isPending?: boolean;
   type?: "web" | "mobile" | "api" | "security";
   created_by?: number;
   status?: string;
@@ -133,15 +134,17 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const res = await getProjects();
       if (res && res.data) {
         const mapped = res.data.map((b: any) => {
-          // Check if current user is in members list
-          const userJoined = b.members?.some((m: any) => m.user_id === user?.id && m.membership_status === "joined");
+          // Check if current user is in members list with joined or accepted status
+          const userJoined = b.members?.some((m: any) => m.user_id === user?.id && (m.membership_status === "joined" || m.membership_status === "accepted"));
+          const userPending = b.members?.some((m: any) => m.user_id === user?.id && m.membership_status === "pending");
           return {
             ...b,
             manager: b.pm?.name || "Unknown",
             deadline: b.end_date,
-            members: b.members?.map((m: any) => ({ name: m.user?.name || "Member" })) || [],
-            totalMembersCount: b.members?.length || 0,
-            isJoined: userJoined || b.created_by === user?.id
+            members: b.members?.filter((m: any) => m.membership_status === "joined" || m.membership_status === "accepted").map((m: any) => ({ name: m.user?.name || "Member" })) || [],
+            totalMembersCount: b.members?.filter((m: any) => m.membership_status === "joined" || m.membership_status === "accepted").length || 0,
+            isJoined: userJoined || b.created_by === user?.id,
+            isPending: userPending
           };
         });
         set({ projects: mapped });

@@ -272,6 +272,13 @@ export default function ManajemenTugasDigitalPage() {
             </span>
           );
         }
+        if (row.isPending) {
+          return (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">
+              Pending
+            </span>
+          );
+        }
         return (
           <Button
             variant="default"
