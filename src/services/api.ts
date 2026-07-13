@@ -1095,3 +1095,19 @@ export const updateBoard = async (id: number, payload: {
   return res.data;
 };
 
+export const getJoinRequests = async (boardId: number) => {
+  const res = await api.get(`/task-management/boards/${boardId}/join-requests`);
+  return res.data;
+};
+
+export const approveJoinRequest = async (boardId: number, userId: number) => {
+  const res = await api.post(`/task-management/boards/${boardId}/members/${userId}/approve`);
+  return res.data;
+};
+
+export const rejectJoinRequest = async (boardId: number, userId: number) => {
+  const res = await api.post(`/task-management/boards/${boardId}/members/${userId}/reject`);
+  return res.data;
+};
+
+

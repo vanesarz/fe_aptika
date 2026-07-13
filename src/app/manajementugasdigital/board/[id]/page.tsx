@@ -20,7 +20,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { showToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { updateTask } from "@/services/api";
+import { updateTask, getJoinRequests, approveJoinRequest, rejectJoinRequest } from "@/services/api";
 
 // Lazy load the KanbanColumn component which automatically handles TaskCard inside it.
 const KanbanColumn = dynamic(
@@ -80,11 +80,38 @@ export default function KanbanBoardPage() {
   const [newTaskPriority, setNewTaskPriority] = useState<"low" | "medium" | "high">("medium");
   const [newTaskAssignee, setNewTaskAssignee] = useState<string>("unassigned");
 
+  // Join request management states
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [processingRequestId, setProcessingRequestId] = useState<number | null>(null);
+
   useEffect(() => {
     loadCurrentUser();
     fetchProjects();
     fetchTasks(projectId);
   }, [projectId, loadCurrentUser, fetchProjects, fetchTasks]);
+
+  const fetchRequests = async () => {
+    if (!projectId) return;
+    setLoadingRequests(true);
+    try {
+      const res = await getJoinRequests(projectId);
+      if (res && res.data) {
+        setJoinRequests(res.data);
+      }
+    } catch (err) {
+      console.error("Failed fetching join requests:", err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isPm && projectId) {
+      fetchRequests();
+    }
+  }, [isPm, projectId]);
 
   // Click outside handlers for dropdowns
   useEffect(() => {
@@ -110,9 +137,51 @@ export default function KanbanBoardPage() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchTasks(projectId);
+    await Promise.all([
+      fetchTasks(projectId),
+      isPm ? fetchRequests() : Promise.resolve()
+    ]);
     setIsRefreshing(false);
     showToast.success("Papan disinkronisasi.");
+  };
+
+  const handleApproveRequest = async (userId: number) => {
+    setProcessingRequestId(userId);
+    try {
+      const res = await approveJoinRequest(projectId, userId);
+      if (res && res.success) {
+        showToast.success("Permintaan bergabung disetujui!");
+        await Promise.all([
+          fetchRequests(),
+          fetchTasks(projectId)
+        ]);
+      } else {
+        showToast.error("Gagal menyetujui permintaan.");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast.error("Gagal menyetujui permintaan.");
+    } finally {
+      setProcessingRequestId(null);
+    }
+  };
+
+  const handleRejectRequest = async (userId: number) => {
+    setProcessingRequestId(userId);
+    try {
+      const res = await rejectJoinRequest(projectId, userId);
+      if (res && res.success) {
+        showToast.success("Permintaan bergabung ditolak.");
+        await fetchRequests();
+      } else {
+        showToast.error("Gagal menolak permintaan.");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast.error("Gagal menolak permintaan.");
+    } finally {
+      setProcessingRequestId(null);
+    }
   };
 
   const handleCreateTask = async (colKey: string) => {
@@ -430,7 +499,11 @@ export default function KanbanBoardPage() {
           </div>
 
           {/* Real Members Avatars */}
-          <div className="flex items-center -space-x-1.5 mr-1.5">
+          <button 
+            onClick={() => setIsMembersModalOpen(true)}
+            className="flex items-center -space-x-1.5 mr-1.5 hover:opacity-80 transition-opacity outline-none"
+            title="Daftar Anggota Proyek"
+          >
             {members.slice(0, 3).map((m) => (
               <Avatar key={m.id} name={m.user?.name || "User"} size="xs" className="ring-2 ring-white" />
             ))}
@@ -442,7 +515,18 @@ export default function KanbanBoardPage() {
             {members.length === 0 && (
               <span className="text-[10px] text-slate-400 font-medium italic mr-1">No Members</span>
             )}
-          </div>
+          </button>
+
+          {isPm && joinRequests.length > 0 && (
+            <button
+              onClick={() => setIsMembersModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-extrabold rounded-lg hover:bg-amber-100 transition-colors animate-pulse"
+              title="Ada permintaan bergabung yang pending"
+            >
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
+              <span>{joinRequests.length} Permintaan Join</span>
+            </button>
+          )}
 
           {/* Filter Popover Button */}
           <div className="relative" ref={filterRef}>
@@ -692,6 +776,99 @@ export default function KanbanBoardPage() {
           <p className="text-[10px] text-slate-400">
             Tindakan ini akan menandai papan sprint ini sebagai selesai (completed) di server, dan Anda akan dialihkan kembali ke daftar proyek utama.
           </p>
+        </div>
+      </Modal>
+
+      {/* Manage Members and Join Requests Modal */}
+      <Modal
+        isOpen={isMembersModalOpen}
+        onClose={() => setIsMembersModalOpen(false)}
+        title="Anggota Proyek & Permintaan Bergabung"
+        size="md"
+        footer={
+          <Button
+            onClick={() => setIsMembersModalOpen(false)}
+            className="bg-slate-900 text-white text-xs font-semibold px-4 h-9 hover:bg-slate-800 rounded-lg"
+          >
+            Tutup
+          </Button>
+        }
+      >
+        <div className="space-y-6 text-left">
+          {/* Approved Members List */}
+          <div>
+            <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3">Daftar Anggota ({members.length})</h4>
+            <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+              {members.map((m) => (
+                <div key={m.id} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar name={m.user?.name || "User"} size="sm" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{m.user?.name}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{m.user?.email}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-1 text-[9px] font-extrabold rounded-md uppercase tracking-wider ${
+                    m.role === "pm" 
+                      ? "bg-blue-50 text-blue-600 border border-blue-100" 
+                      : "bg-slate-100 text-slate-500 border border-slate-200"
+                  }`}>
+                    {m.role === "pm" ? "Project Manager" : "Member"}
+                  </span>
+                </div>
+              ))}
+              {members.length === 0 && (
+                <p className="text-xs text-slate-400 italic">Belum ada anggota.</p>
+              )}
+            </div>
+          </div>
+
+          {/* PM only: Join Requests Section */}
+          {isPm && (
+            <div className="border-t border-slate-100 pt-4">
+              <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <span>Permintaan Bergabung ({joinRequests.length})</span>
+                {joinRequests.length > 0 && (
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+                )}
+              </h4>
+              <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                {joinRequests.map((req) => (
+                  <div key={req.id} className="flex items-center justify-between p-2.5 bg-amber-50/20 border border-amber-100/50 rounded-xl">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar name={req.user?.name || "User"} size="sm" />
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">{req.user?.name}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{req.user?.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        disabled={processingRequestId !== null}
+                        onClick={() => handleApproveRequest(req.user_id)}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] px-2.5 py-1.5 h-7 rounded-lg"
+                      >
+                        {processingRequestId === req.user_id ? "..." : "Setuju"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={processingRequestId !== null}
+                        onClick={() => handleRejectRequest(req.user_id)}
+                        className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold text-[10px] px-2.5 py-1.5 h-7 rounded-lg bg-white"
+                      >
+                        Tolak
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {joinRequests.length === 0 && (
+                  <p className="text-xs text-slate-400 italic">Tidak ada permintaan bergabung yang pending.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

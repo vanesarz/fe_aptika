@@ -32,7 +32,8 @@ export default function ManajemenTugasDigitalPage() {
     fetchProjects,
     addProject,
     joinProject,
-    loadCurrentUser
+    loadCurrentUser,
+    currentUser
   } = useTaskStore();
 
   const [search, setSearch] = useState("");
@@ -308,16 +309,18 @@ export default function ManajemenTugasDigitalPage() {
           className="max-w-md bg-slate-50/50"
         />
 
-        <Button
-          onClick={() => {
-            setFormErrors({});
-            setIsModalOpen(true);
-          }}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-md shadow-orange-500/20 hover:scale flex items-center gap-1.5 self-start sm:self-auto"
-        >
-          <Plus size={16} />
-          Tambah Proyek
-        </Button>
+        {currentUser?.role === "admin" && (
+          <Button
+            onClick={() => {
+              setFormErrors({});
+              setIsModalOpen(true);
+            }}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-md shadow-orange-500/20 hover:scale flex items-center gap-1.5 self-start sm:self-auto"
+          >
+            <Plus size={16} />
+            Tambah Proyek
+          </Button>
+        )}
       </div>
 
       {/* Main Table Content */}
