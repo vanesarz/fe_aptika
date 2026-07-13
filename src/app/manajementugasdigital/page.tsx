@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   Loader2
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
@@ -23,25 +22,19 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { showToast } from "@/components/ui/Toast";
-import { getProjects, createProject, joinProject } from "@/services/api";
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  manager: string;
-  deadline: string;
-  members: { name: string; avatarUrl?: string }[];
-  totalMembersCount: number;
-  isJoined?: boolean;
-  type?: "web" | "mobile" | "api" | "security";
-}
+import { useTaskStore, Project } from "@/store/useTaskStore";
 
 export default function ManajemenTugasDigitalPage() {
-  const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    projects,
+    loadingProjects,
+    error,
+    fetchProjects,
+    addProject,
+    joinProject,
+    loadCurrentUser
+  } = useTaskStore();
+
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -51,6 +44,7 @@ export default function ManajemenTugasDigitalPage() {
   const [newProjDesc, setNewProjDesc] = useState("");
   const [newProjManager, setNewProjManager] = useState("");
   const [newProjDeadline, setNewProjDeadline] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   
   // Validation errors state
   const [formErrors, setFormErrors] = useState<{
@@ -65,36 +59,10 @@ export default function ManajemenTugasDigitalPage() {
   const [projectToJoin, setProjectToJoin] = useState<Project | null>(null);
   const [joining, setJoining] = useState(false);
 
-  // Fetch projects from API
-  const fetchData = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await getProjects();
-      if (res && res.data) {
-        const mapped = res.data.map((b: any) => ({
-          ...b,
-          manager: b.pm?.name || "Unknown",
-          deadline: b.end_date,
-          members: b.members?.map((m: any) => ({ name: m.user?.name || "Member" })) || [],
-          totalMembersCount: b.members?.length || 0,
-          isJoined: b.members?.length > 0
-        }));
-        setProjects(mapped);
-      } else {
-        setProjects([]);
-      }
-    } catch (err: any) {
-      console.error("Gagal mengambil data proyek:", err);
-      setError("Gagal memuat daftar proyek. Silakan coba beberapa saat lagi.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-  }, []);
+    loadCurrentUser();
+    fetchProjects();
+  }, [loadCurrentUser, fetchProjects]);
 
   // Filtering
   const filteredProjects = useMemo(() => {
@@ -153,6 +121,7 @@ export default function ManajemenTugasDigitalPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    setSubmitting(true);
     // Detect type based on keywords
     let pType: "web" | "mobile" | "api" | "security" = "web";
     const lowercaseName = newProjName.toLowerCase();
@@ -164,18 +133,16 @@ export default function ManajemenTugasDigitalPage() {
       pType = "security";
     }
 
-    const payload = {
+    const success = await addProject({
       name: newProjName,
       description: newProjDesc,
       deadline: newProjDeadline,
       type: pType
-    };
+    });
 
-    try {
-      const res = await createProject(payload as any);
-      // Auto refetch to update table without full reload
-      await fetchData();
-      
+    setSubmitting(false);
+
+    if (success) {
       // Reset form states
       setNewProjName("");
       setNewProjDesc("");
@@ -183,10 +150,8 @@ export default function ManajemenTugasDigitalPage() {
       setNewProjDeadline("");
       setFormErrors({});
       setIsModalOpen(false);
-      
-      showToast.success(`Proyek "${payload.name}" berhasil dibuat!`);
-    } catch (err) {
-      console.error(err);
+      showToast.success(`Proyek "${newProjName}" berhasil dibuat!`);
+    } else {
       showToast.error("Gagal menyimpan proyek baru.");
     }
   };
@@ -199,19 +164,16 @@ export default function ManajemenTugasDigitalPage() {
   const confirmJoinRequest = async () => {
     if (!projectToJoin) return;
     setJoining(true);
-    try {
-      await joinProject(projectToJoin.id);
-      // Auto refetch to update table without reload
-      await fetchData();
-      setIsJoinConfirmOpen(false);
+    const success = await joinProject(projectToJoin.id);
+    setJoining(false);
+    setIsJoinConfirmOpen(false);
+
+    if (success) {
       showToast.success(`Anda berhasil bergabung dengan proyek "${projectToJoin.name}"`);
-    } catch (err) {
-      console.error(err);
+    } else {
       showToast.error("Gagal bergabung ke proyek.");
-    } finally {
-      setJoining(false);
-      setProjectToJoin(null);
     }
+    setProjectToJoin(null);
   };
 
   // Table Columns Definition
@@ -296,6 +258,13 @@ export default function ManajemenTugasDigitalPage() {
       header: "AKSI",
       className: "w-24 text-center",
       render: (_, row) => {
+        if (row.status === "completed") {
+          return (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+              Completed
+            </span>
+          );
+        }
         if (row.isJoined) {
           return (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
@@ -328,7 +297,7 @@ export default function ManajemenTugasDigitalPage() {
             setCurrentPage(1);
           }}
           onClear={() => setSearch("")}
-          placeholder="Cari proyek atau tugas..."
+          placeholder="Cari proyek..."
           className="max-w-md bg-slate-50/50"
         />
 
@@ -353,7 +322,7 @@ export default function ManajemenTugasDigitalPage() {
               <h3 className="text-sm font-bold text-slate-800">Terjadi Kesalahan</h3>
               <p className="text-xs text-slate-500 mt-1">{error}</p>
             </div>
-            <Button size="sm" onClick={fetchData} className="mt-2 bg-slate-900 text-white">
+            <Button size="sm" onClick={fetchProjects} className="mt-2 bg-slate-900 text-white">
               Coba Lagi
             </Button>
           </div>
@@ -363,7 +332,7 @@ export default function ManajemenTugasDigitalPage() {
           title="Daftar Proyek Utama"
           headerActions={
             <button 
-              onClick={fetchData} 
+              onClick={fetchProjects} 
               className="p-1 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
               title="Refresh Data"
             >
@@ -377,11 +346,11 @@ export default function ManajemenTugasDigitalPage() {
             <Table
               columns={columns}
               data={paginatedProjects}
-              loading={loading}
+              loading={loadingProjects}
               emptyText="Tidak ada proyek ditemukan."
               className="border-0 rounded-none shadow-none"
             />
-            {!loading && filteredProjects.length > 0 && (
+            {!loadingProjects && filteredProjects.length > 0 && (
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -398,13 +367,14 @@ export default function ManajemenTugasDigitalPage() {
       {/* Reusable Create Project Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => !submitting && setIsModalOpen(false)}
         title="Tambah Proyek Baru"
         size="md"
         footer={
           <>
             <Button
               variant="outline"
+              disabled={submitting}
               onClick={() => setIsModalOpen(false)}
               className="text-xs font-semibold px-4 h-9 border-slate-200"
             >
@@ -412,9 +382,10 @@ export default function ManajemenTugasDigitalPage() {
             </Button>
             <Button
               onClick={handleCreateProject}
+              disabled={submitting}
               className="bg-slate-900 text-white text-xs font-semibold px-4 h-9"
             >
-              Simpan Proyek
+              {submitting ? "Menyimpan..." : "Simpan Proyek"}
             </Button>
           </>
         }
@@ -438,6 +409,7 @@ export default function ManajemenTugasDigitalPage() {
             }}
             error={formErrors.name}
             required
+            disabled={submitting}
           />
 
           <Input
@@ -452,6 +424,7 @@ export default function ManajemenTugasDigitalPage() {
             }}
             error={formErrors.description}
             required
+            disabled={submitting}
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -465,6 +438,7 @@ export default function ManajemenTugasDigitalPage() {
               }}
               error={formErrors.manager}
               required
+              disabled={submitting}
             />
 
             <Input
@@ -477,6 +451,7 @@ export default function ManajemenTugasDigitalPage() {
               }}
               error={formErrors.deadline}
               required
+              disabled={submitting}
             />
           </div>
         </form>
