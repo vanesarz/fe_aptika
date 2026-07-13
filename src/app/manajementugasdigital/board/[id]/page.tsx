@@ -49,7 +49,8 @@ export default function KanbanBoardPage() {
     assignTask,
     removeTask,
     completeSprint,
-    loadCurrentUser
+    loadCurrentUser,
+    addNotification
   } = useTaskStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -151,9 +152,13 @@ export default function KanbanBoardPage() {
   const handleApproveRequest = async (userId: number) => {
     setProcessingRequestId(userId);
     try {
+      const request = joinRequests.find(r => r.user?.id === userId);
+      const userName = request?.user?.name || "Anggota";
+
       const res = await approveJoinRequest(projectId, userId);
       if (res && res.success) {
         showToast.success("Permintaan bergabung disetujui!");
+        addNotification("Permintaan Join Disetujui", `Permintaan bergabung dari "${userName}" disetujui.`);
         await Promise.all([
           fetchRequests(),
           fetchTasks(projectId)
@@ -172,9 +177,13 @@ export default function KanbanBoardPage() {
   const handleRejectRequest = async (userId: number) => {
     setProcessingRequestId(userId);
     try {
+      const request = joinRequests.find(r => r.user?.id === userId);
+      const userName = request?.user?.name || "Anggota";
+
       const res = await rejectJoinRequest(projectId, userId);
       if (res && res.success) {
         showToast.success("Permintaan bergabung ditolak.");
+        addNotification("Permintaan Join Ditolak", `Permintaan bergabung dari "${userName}" ditolak.`);
         await fetchRequests();
       } else {
         showToast.error("Gagal menolak permintaan.");
