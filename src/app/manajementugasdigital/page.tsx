@@ -309,10 +309,11 @@ export default function ManajemenTugasDigitalPage() {
           className="max-w-md bg-slate-50/50"
         />
 
-        {currentUser?.role === "admin" && (
+        {currentUser && (
           <Button
             onClick={() => {
               setFormErrors({});
+              setNewProjManager(currentUser?.name || "");
               setIsModalOpen(true);
             }}
             className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-md shadow-orange-500/20 hover:scale flex items-center gap-1.5 self-start sm:self-auto"
@@ -448,7 +449,7 @@ export default function ManajemenTugasDigitalPage() {
               }}
               error={formErrors.manager}
               required
-              disabled={submitting}
+              disabled={true}
             />
 
             <Input
