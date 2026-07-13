@@ -17,6 +17,7 @@ interface KanbanColumnProps {
   newTaskTitle: string;
   newTaskPriority: "low" | "medium" | "high";
   newTaskAssignee: string;
+  isCreatingTask?: boolean;
   groupBy: "status" | "priority" | "assignee";
   onDragOver: (e: React.DragEvent, colKey: string) => void;
   onDragLeave: () => void;
@@ -49,6 +50,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   newTaskTitle,
   newTaskPriority,
   newTaskAssignee,
+  isCreatingTask = false,
   groupBy,
   onDragOver,
   onDragLeave,
@@ -171,9 +173,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               </button>
               <button 
                 onClick={() => onCreateTask(colKey)} 
-                className="bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors shadow-sm"
+                disabled={isCreatingTask}
+                className={`bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors shadow-sm ${isCreatingTask ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                Tambah
+                {isCreatingTask ? "Menambah..." : "Tambah"}
               </button>
             </div>
           </div>

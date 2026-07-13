@@ -79,6 +79,7 @@ export default function KanbanBoardPage() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<"low" | "medium" | "high">("medium");
   const [newTaskAssignee, setNewTaskAssignee] = useState<string>("unassigned");
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   // Join request management states
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
@@ -197,15 +198,23 @@ export default function KanbanBoardPage() {
       return;
     }
 
-    const tAssigneeId = newTaskAssignee === "unassigned" ? null : Number(newTaskAssignee);
-    const success = await addTask(projectId, newTaskTitle, newTaskPriority, tAssigneeId, colKey, groupBy);
-    
-    if (success) {
-      setNewTaskTitle("");
-      setActiveInputColumn(null);
-      showToast.success("Tugas berhasil ditambahkan!");
-    } else {
-      showToast.error("Gagal membuat tugas.");
+    // Guard against double-clicks / multiple submissions
+    if (isCreatingTask) return;
+    setIsCreatingTask(true);
+
+    try {
+      const tAssigneeId = newTaskAssignee === "unassigned" ? null : Number(newTaskAssignee);
+      const success = await addTask(projectId, newTaskTitle, newTaskPriority, tAssigneeId, colKey, groupBy);
+      
+      if (success) {
+        setNewTaskTitle("");
+        setActiveInputColumn(null);
+        showToast.success("Tugas berhasil ditambahkan!");
+      } else {
+        showToast.error("Gagal membuat tugas.");
+      }
+    } finally {
+      setIsCreatingTask(false);
     }
   };
 
@@ -709,6 +718,7 @@ export default function KanbanBoardPage() {
               newTaskTitle={newTaskTitle}
               newTaskPriority={newTaskPriority}
               newTaskAssignee={newTaskAssignee}
+              isCreatingTask={isCreatingTask}
               groupBy={groupBy}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
