@@ -44,7 +44,7 @@ export default function Avatar({
   };
 
   return (
-    <div className={`relative inline-block ${className}`} {...props}>
+    <div className={`relative inline-block rounded-full ${className}`} {...props}>
       <div className={`
         flex items-center justify-center rounded-full font-bold overflow-hidden select-none
         ${sizeClasses[size]}
