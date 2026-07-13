@@ -87,18 +87,12 @@ export default function KanbanBoardPage() {
   const [processingRequestId, setProcessingRequestId] = useState<number | null>(null);
 
   const currentProject = useMemo(() => {
-  return projects.find((p) => p.id === projectId) || null;
-}, [projects, projectId]);
+    return projects.find((p) => p.id === projectId) || null;
+  }, [projects, projectId]);
 
-const isPm = useMemo(() => {
-  return currentProject ? (currentProject.created_by === currentUser?.id || currentUser?.role === "admin") : false;
-}, [currentProject, currentUser]);
+  const isPm = useMemo(() => {
     return currentProject ? (currentProject.created_by === currentUser?.id || currentUser?.role === "admin") : false;
   }, [currentProject, currentUser]);
-
-
-
-
 
   useEffect(() => {
     loadCurrentUser();
