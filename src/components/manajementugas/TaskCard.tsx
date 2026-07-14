@@ -231,7 +231,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   )}
                   
                   {!canModifyStatus && (
-                    <div className="px-2.5 py-2 text-center text-slate-400 italic">
+                    <div className="px-2.5 py-2 z-20 text-center text-slate-400 italic">
                       Tidak ada aksi tersedia
                     </div>
                   )}

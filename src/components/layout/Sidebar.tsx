@@ -14,8 +14,9 @@ import {
   Briefcase, 
   Users, 
   LogOut, 
-  Menu, 
-  X 
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 
@@ -35,6 +36,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [userName, setUserName] = useState("User");
 
   useEffect(() => {
@@ -55,6 +57,17 @@ export default function Sidebar() {
   }, []);
 
   const activeSegment = pathname.split("/")[1] || "rekayasaaplikasi";
+
+  const toggleSidebar = () => {
+    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+      setIsCollapsed((prev) => !prev);
+      setIsOpen(false);
+      return;
+    }
+
+    setIsOpen((prev) => !prev);
+    setIsCollapsed(false);
+  };
 
   const handleTeamClick = (key: string) => {
     setIsOpen(false);
@@ -80,11 +93,11 @@ export default function Sidebar() {
     <>
       {/* Hamburger Toggle Button for Mobile/Tablet */}
       <button 
-        className="fixed top-4 left-4 z-50 flex lg:hidden items-center justify-center w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
-        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
+        onClick={toggleSidebar}
         aria-label="Toggle Menu"
       >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
+        {isOpen || isCollapsed ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
       </button>
 
       {/* Overlay Backdrop for Mobile/Tablet */}
@@ -97,23 +110,32 @@ export default function Sidebar() {
 
       {/* Sidebar Navigation */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 flex flex-col w-[260px] h-screen
+        fixed inset-y-0 left-0 z-40 flex flex-col h-screen
         bg-[#0b2146] text-white border-r border-slate-800
-        transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:flex-shrink-0
+        transition-all duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:flex-shrink-0
+        ${isCollapsed ? "w-[76px]" : "w-[260px]"}
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Brand Header */}
         <div 
-          className="flex items-center gap-3 px-6 py-6 border-b border-white/5 cursor-pointer"
+          className={`flex items-center gap-3 border-b border-white/5 cursor-pointer ${isCollapsed ? "justify-center px-3 py-5" : "px-6 py-6"}`}
           onClick={() => router.push("/rekayasaaplikasi/dashboard")}
         >
-          <div className="flex-1">
-            <h1 className="text-[15px] font-extrabold tracking-wide uppercase bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              Aptika Tools
-            </h1>
-            <p className="text-[10px] font-semibold text-slate-400 tracking-wider mt-0.5">
-              Rekap Data Aptika
-            </p>
+          <div className={`flex items-center ${isCollapsed ? "justify-center" : "flex-1"}`}>
+            {isCollapsed ? (
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-black tracking-[0.2em] text-white">
+                AT
+              </div>
+            ) : (
+              <div>
+                <h1 className="text-[15px] font-extrabold tracking-wide uppercase bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                  Aptika Tools
+                </h1>
+                <p className="text-[10px] font-semibold text-slate-400 tracking-wider mt-0.5">
+                  Rekap Data Aptika
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -121,9 +143,11 @@ export default function Sidebar() {
         <div className="flex-1 overflow-y-auto py-5 px-3 space-y-7 scrollbar-hide">
           {/* Services Section */}
           <div className="space-y-1">
-            <span className="px-4 text-[10px] font-extrabold text-slate-500 tracking-widest uppercase select-none">
-              Service
-            </span>
+            {!isCollapsed && (
+              <span className="px-4 text-[10px] font-extrabold text-slate-500 tracking-widest uppercase select-none">
+                Service
+              </span>
+            )}
             <div className="pt-2 space-y-0.5">
               {TEAMS.map((team) => {
                 const Icon = team.icon;
@@ -134,6 +158,7 @@ export default function Sidebar() {
                     className={`
                       w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-semibold
                       transition-all duration-150 select-none outline-none group
+                      ${isCollapsed ? "justify-center px-3" : ""}
                       ${isActive 
                         ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20" 
                         : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -142,9 +167,9 @@ export default function Sidebar() {
                     onClick={() => handleTeamClick(team.key)}
                   >
                     <Icon size={16} className={`flex-shrink-0 transition-colors ${isActive ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"}`} />
-                    <span className="flex-1 truncate">{team.name}</span>
+                    {!isCollapsed && <span className="flex-1 truncate">{team.name}</span>}
                     {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+                      <span className={`w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(56,189,248,0.8)] ${isCollapsed ? "absolute right-2" : ""}`} />
                     )}
                   </button>
                 );
@@ -155,14 +180,17 @@ export default function Sidebar() {
           {/* Admin Panel Section */}
           {isAdmin && (
             <div className="space-y-1 pt-4 border-t border-white/5">
-              <span className="px-4 text-[10px] font-extrabold text-slate-500 tracking-widest uppercase select-none">
-                Admin Panel
-              </span>
+              {!isCollapsed && (
+                <span className="px-4 text-[10px] font-extrabold text-slate-500 tracking-widest uppercase select-none">
+                  Admin Panel
+                </span>
+              )}
               <div className="pt-2 space-y-0.5">
                 <button
                   className={`
                     w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-semibold
                     transition-all duration-150 select-none outline-none group
+                    ${isCollapsed ? "justify-center px-3" : ""}
                     ${activeSegment === "admin" 
                       ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20" 
                       : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -174,9 +202,9 @@ export default function Sidebar() {
                   }}
                 >
                   <Users size={16} className={`flex-shrink-0 transition-colors ${activeSegment === "admin" ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"}`} />
-                  <span className="flex-1 truncate">Manajemen User</span>
+                  {!isCollapsed && <span className="flex-1 truncate">Manajemen User</span>}
                   {activeSegment === "admin" && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(56,189,248,0.8)]" />
+                    <span className={`w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(56,189,248,0.8)] ${isCollapsed ? "absolute right-2" : ""}`} />
                   )}
                 </button>
               </div>
@@ -185,20 +213,22 @@ export default function Sidebar() {
         </div>
 
         {/* Footer Area with Profile and Logout */}
-        <div className="p-4 border-t border-white/5 bg-[#081835]/50 flex flex-col gap-3">
-          <div className="flex items-center gap-3 px-2">
+        <div className={`p-4 border-t border-white/5 bg-[#081835]/50 flex flex-col gap-3 ${isCollapsed ? "items-center" : ""}`}>
+          <div className={`flex items-center gap-3 px-2 ${isCollapsed ? "justify-center" : ""}`}>
             <Avatar name={userName} size="sm" />
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-bold text-white truncate">{userName}</h4>
-              <p className="text-[10px] text-slate-400 truncate">{isAdmin ? "Administrator" : "Developer"}</p>
-            </div>
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0">
+                <h4 className="text-xs font-bold text-white truncate">{userName}</h4>
+                <p className="text-[10px] text-slate-400 truncate">{isAdmin ? "Administrator" : "Developer"}</p>
+              </div>
+            )}
           </div>
           <button 
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold"
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold ${isCollapsed ? "justify-center" : ""}`}
             onClick={handleLogout}
           >
             <LogOut size={14} />
-            Keluar Aplikasi
+            {!isCollapsed && "Keluar Aplikasi"}
           </button>
         </div>
       </aside>
