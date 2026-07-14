@@ -27,8 +27,8 @@ export const deleteTaskNotification = async (id: number) => {
 };
 
 export const getTaskNotificationRedirectPath = (notification: NotificationItem) => {
-  if (notification.task?.id) {
-    return `/manajementugasdigital/tasks/${notification.task.id}`;
+  if (notification.task?.id && notification.board?.id) {
+    return `/manajementugasdigital/board/${notification.board.id}?task=${notification.task.id}`;
   }
 
   if (notification.board?.id) {

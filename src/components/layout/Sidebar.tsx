@@ -92,13 +92,15 @@ export default function Sidebar() {
   return (
     <>
       {/* Hamburger Toggle Button for Mobile/Tablet */}
-      <button 
-        className="fixed top-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
-        onClick={toggleSidebar}
-        aria-label="Toggle Menu"
-      >
-        {isOpen || isCollapsed ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
-      </button>
+      {!isOpen && (
+        <button 
+          className="fixed top-4 left-4 z-50 flex items-center justify-center lg:hidden w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
+          onClick={toggleSidebar}
+          aria-label="Toggle Menu"
+        >
+          <PanelLeftOpen size={20} />
+        </button>
+      )}
 
       {/* Overlay Backdrop for Mobile/Tablet */}
       {isOpen && (
@@ -118,16 +120,22 @@ export default function Sidebar() {
       `}>
         {/* Brand Header */}
         <div 
-          className={`flex items-center gap-3 border-b border-white/5 cursor-pointer ${isCollapsed ? "justify-center px-3 py-5" : "px-6 py-6"}`}
-          onClick={() => router.push("/rekayasaaplikasi/dashboard")}
+          className={`flex items-center justify-between border-b border-white/5 ${isCollapsed ? "px-3 py-5" : "px-6 py-6"}`}
         >
-          <div className={`flex items-center ${isCollapsed ? "justify-center" : "flex-1"}`}>
-            {isCollapsed ? (
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-black tracking-[0.2em] text-white">
-                AT
-              </div>
-            ) : (
-              <div>
+          {isCollapsed ? (
+            <button 
+              onClick={toggleSidebar}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all animate-in fade-in duration-200"
+              title="Expand Sidebar"
+            >
+              <PanelLeftOpen size={20} />
+            </button>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <div 
+                className="cursor-pointer flex-grow animate-in fade-in duration-200"
+                onClick={() => router.push("/rekayasaaplikasi/dashboard")}
+              >
                 <h1 className="text-[15px] font-extrabold tracking-wide uppercase bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                   Aptika Tools
                 </h1>
@@ -135,8 +143,15 @@ export default function Sidebar() {
                   Rekap Data Aptika
                 </p>
               </div>
-            )}
-          </div>
+              <button 
+                onClick={toggleSidebar}
+                className="flex p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all ml-2"
+                title="Collapse Sidebar"
+              >
+                <PanelLeftClose size={18} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Navigation Menu List */}

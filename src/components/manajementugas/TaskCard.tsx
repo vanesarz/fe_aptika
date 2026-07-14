@@ -23,6 +23,7 @@ interface TaskCardProps {
   onDelete: (taskId: number) => void;
   onDragStart: (e: React.DragEvent, id: number) => void;
   onDragEnd: () => void;
+  onOpenDetail?: (task: Task) => void;
 }
 
 const priorityConfig = {
@@ -42,6 +43,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onDelete,
   onDragStart,
   onDragEnd,
+  onOpenDetail,
 }) => {
   const [activeMenu, setActiveMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -109,13 +111,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       draggable={canModifyStatus}
       onDragStart={handleDragStartLocal}
       onDragEnd={onDragEnd}
-      className={`bg-white rounded-xl p-3.5 border border-slate-200/50 shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative select-none ${
-        canModifyStatus ? "cursor-grab active:cursor-grabbing" : "opacity-90 border-slate-100"
+      onClick={() => onOpenDetail?.(task)}
+      className={`bg-white rounded-xl p-3.5 border border-slate-200/50 shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative select-none cursor-pointer ${
+        canModifyStatus ? "hover:border-slate-300" : "opacity-90 border-slate-100"
       }`}
     >
       {/* Checkbox status */}
       <button 
-        onClick={handleToggleLocal} 
+        onClick={(e) => {
+          e.stopPropagation();
+          handleToggleLocal();
+        }} 
         className={`mt-0.5 transition-colors flex-shrink-0 ${
           task.status === "done" ? "text-blue-600 hover:text-blue-800" : "text-slate-400 hover:text-slate-600"
         }`}
@@ -156,7 +162,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {/* Options Menu */}
             <div className="relative flex-shrink-0" ref={menuRef}>
               <button 
-                onClick={() => setActiveMenu(!activeMenu)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveMenu(!activeMenu);
+                }}
                 className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <MoreVertical size={13} />
@@ -176,7 +185,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                         <button
                           key={opt.key}
                           disabled={task.status === opt.key}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setActiveMenu(false);
                             handleMoveStatusLocal(opt.key as any);
                           }}
@@ -196,7 +206,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                         <button
                           key={m.user?.id}
                           disabled={task.assigneeId === m.user?.id}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setActiveMenu(false);
                             handleAssignLocal(m.user?.id);
                           }}
@@ -207,7 +218,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                       ))}
                       <button
                         disabled={task.assigneeId === null}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setActiveMenu(false);
                           handleAssignLocal(null);
                         }}
@@ -218,7 +230,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                       
                       <div className="border-t border-slate-100 my-1" />
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setActiveMenu(false);
                           handleDeleteLocal();
                         }}

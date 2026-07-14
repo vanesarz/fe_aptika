@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowLeft,
   ChevronDown,
@@ -20,6 +20,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { showToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { TaskDetailModal } from "@/components/manajementugas/TaskDetailModal";
 import { updateTask, getJoinRequests, approveJoinRequest, rejectJoinRequest } from "@/services/api";
 
 // Lazy load the KanbanColumn component which automatically handles TaskCard inside it.
@@ -34,6 +35,7 @@ const KanbanColumn = dynamic(
 export default function KanbanBoardPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = Number(params.id);
 
   const {
@@ -87,6 +89,59 @@ export default function KanbanBoardPage() {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [processingRequestId, setProcessingRequestId] = useState<number | null>(null);
+
+  // Selected task detail modal states
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const handleUpdateTaskDetails = async (taskId: number, payload: any) => {
+    try {
+      const apiPayload = { ...payload };
+      if (payload.status) {
+        if (payload.status === "inprogress") apiPayload.status = "in_progress";
+        else if (payload.status === "inreview") apiPayload.status = "in_review";
+      }
+      
+      const res = await updateTask(taskId, apiPayload);
+      if (res && res.success) {
+        // Sync store state
+        await fetchTasks(projectId);
+        
+        // Also update the selected task state so the modal updates!
+        const updatedTask = useTaskStore.getState().tasks.find(t => t.id === taskId);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Failed to update task", e);
+      return false;
+    }
+  };
+
+  // Open detail modal if task query parameter exists in URL
+  const taskQuery = searchParams?.get("task");
+  useEffect(() => {
+    if (taskQuery && tasks.length > 0) {
+      const tId = Number(taskQuery);
+      const matchedTask = tasks.find(t => t.id === tId);
+      if (matchedTask) {
+        setSelectedTask(matchedTask);
+        setIsDetailModalOpen(true);
+      }
+    }
+  }, [taskQuery, tasks]);
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    // Remove query param task from URL
+    const currentParams = new URLSearchParams(searchParams?.toString() || "");
+    currentParams.delete("task");
+    const newQuery = currentParams.toString();
+    router.replace(`/manajementugasdigital/board/${projectId}${newQuery ? `?${newQuery}` : ""}`);
+  };
 
   const currentProject = useMemo(() => {
     return projects.find((p) => p.id === projectId) || null;
@@ -752,6 +807,10 @@ export default function KanbanBoardPage() {
               setNewTaskTitle={setNewTaskTitle}
               setNewTaskPriority={setNewTaskPriority}
               setNewTaskAssignee={setNewTaskAssignee}
+              onOpenDetail={(task) => {
+                setSelectedTask(task);
+                setIsDetailModalOpen(true);
+              }}
             />
           );
         })}
@@ -892,6 +951,17 @@ export default function KanbanBoardPage() {
           )}
         </div>
       </Modal>
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        task={selectedTask}
+        project={currentProject}
+        currentUser={currentUser}
+        members={members}
+        onUpdateTask={handleUpdateTaskDetails}
+      />
     </div>
   );
 }

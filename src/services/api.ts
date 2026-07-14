@@ -1110,4 +1110,23 @@ export const rejectJoinRequest = async (boardId: number, userId: number) => {
   return res.data;
 };
 
+// ─── TASK COMMENTS (API) ──────────────────────────────────
+export const getTaskComments = async (taskId: number) => {
+  const res = await api.get("/task-management/task-comments", {
+    params: { task_id: taskId }
+  });
+  return res.data;
+};
+
+export const createTaskComment = async (payload: { task_id: number; comment: string }) => {
+  const res = await api.post("/task-management/task-comments", payload);
+  return res.data;
+};
+
+export const deleteTaskComment = async (id: number) => {
+  const res = await api.delete(`/task-management/task-comments/${id}`);
+  return res.data;
+};
+
+
 

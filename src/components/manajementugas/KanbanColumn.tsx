@@ -34,6 +34,7 @@ interface KanbanColumnProps {
   setNewTaskTitle: (val: string) => void;
   setNewTaskPriority: (val: "low" | "medium" | "high") => void;
   setNewTaskAssignee: (val: string) => void;
+  onOpenDetail?: (task: Task) => void;
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -67,6 +68,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   setNewTaskTitle,
   setNewTaskPriority,
   setNewTaskAssignee,
+  onOpenDetail,
 }) => {
   const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
 
@@ -104,6 +106,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               onDelete={onDelete}
               onDragStart={onDragStart}
               onDragEnd={onDragEnd}
+              onOpenDetail={onOpenDetail}
             />
           ))
         ) : (

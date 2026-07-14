@@ -21,6 +21,10 @@ export interface Task {
   assigneeName: string | null;
   assigneeId: number | null;
   status: "todo" | "inprogress" | "inreview" | "done";
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  activities?: any[];
 }
 
 export interface Project {
@@ -59,7 +63,11 @@ const mapBackendToFrontendTask = (t: any): Task => {
     priority: t.priority || "medium",
     assigneeName: t.assignee?.name || null,
     assigneeId: t.assigned_to || null,
-    status: fStatus
+    status: fStatus,
+    description: t.description || "",
+    createdAt: t.created_at || t.createdAt,
+    updatedAt: t.updated_at || t.updatedAt,
+    activities: t.activities || []
   };
 };
 
