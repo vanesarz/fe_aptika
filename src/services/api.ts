@@ -1128,5 +1128,12 @@ export const deleteTaskComment = async (id: number) => {
   return res.data;
 };
 
+export const getTaskActivities = async (taskId: number) => {
+  const res = await api.get("/task-management/task-activities", {
+    params: { task_id: taskId }
+  });
+  return res.data;
+};
+
 
 

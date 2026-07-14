@@ -19,7 +19,7 @@ import {
 import { Avatar } from "@/components/ui/Avatar";
 import { Task, Project } from "@/store/useTaskStore";
 import { showToast } from "@/components/ui/Toast";
-import { getTaskComments, createTaskComment, deleteTaskComment } from "@/services/api";
+import { getTaskComments, createTaskComment, deleteTaskComment, getTaskActivities } from "@/services/api";
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -58,6 +58,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [savingComment, setSavingComment] = useState(false);
   const [savingDescription, setSavingDescription] = useState(false);
 
+  // Activities state
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
   // Attachments state
   const [attachments, setAttachments] = useState<Array<{ id: string; name: string; size: string; progress?: number; done?: boolean }>>([]);
   const [draggingFile, setDraggingFile] = useState(false);
@@ -81,14 +85,16 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, task]);
 
-  // Load comments and description on task change
+  // Load comments, activities, and description on task change
   useEffect(() => {
     if (isOpen && task) {
       setEditedDescription(task.description || "");
       setIsEditingDescription(false);
       fetchComments();
+      fetchActivities();
     } else {
       setComments([]);
+      setActivities([]);
     }
   }, [isOpen, task]);
 
@@ -119,6 +125,21 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   };
 
+  const fetchActivities = async () => {
+    if (!task) return;
+    setLoadingActivities(true);
+    try {
+      const res = await getTaskActivities(task.id);
+      if (res && res.success) {
+        setActivities(res.data || []);
+      }
+    } catch (e) {
+      console.error("Failed fetching activities", e);
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
   if (!isOpen || !task) return null;
 
   const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
@@ -133,6 +154,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const success = await onUpdateTask(task.id, { status: nextStatus });
     if (success) {
       showToast.success(`Status berhasil diubah ke ${statusConfig[nextStatus]?.label}`);
+      fetchActivities();
     }
   };
 
@@ -161,6 +183,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         setComments([res.data, ...comments]);
         setNewComment("");
         showToast.success("Komentar ditambahkan.");
+        fetchActivities();
       }
     } catch (err) {
       showToast.error("Gagal menambahkan komentar.");
@@ -594,8 +617,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           {/* History Panel */}
           {activeTab === "history" && (
             <div className="space-y-3.5 text-left">
-              {task.activities && task.activities.length > 0 ? (
-                task.activities.map((act: any) => (
+              {loadingActivities ? (
+                <div className="flex items-center justify-center py-8 gap-2 text-xs text-slate-400">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Memuat riwayat...</span>
+                </div>
+              ) : activities.length > 0 ? (
+                activities.map((act: any) => (
                   <div key={act.id} className="flex items-start gap-3 text-xs leading-relaxed text-slate-600">
                     <Avatar name={act.user?.name || "System"} size="xs" className="mt-0.5" />
                     <div>
