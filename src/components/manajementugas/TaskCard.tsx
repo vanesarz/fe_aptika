@@ -58,8 +58,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
+  const isPm = project ? (currentUser?.role === "pm") : false;
   const isAssignee = task.assigneeId === currentUser?.id;
+
+  const canMemberMoveToDone = isPm; // hanya PM boleh ke done
   const canModifyStatus = isPm || isAssignee;
 
   const handleDragStartLocal = (e: React.DragEvent) => {
@@ -84,6 +86,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       showToast.error("Anda tidak berwenang mengubah status tugas ini.");
       return;
     }
+
+    if (!canMemberMoveToDone && status === "done") {
+      showToast.error("Member biasa hanya bisa sampai status In Review.");
+      return;
+    }
+
     onMoveStatus(task.id, status);
   };
 
@@ -106,6 +114,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const config = priorityConfig[task.priority] || priorityConfig.medium;
   const PriorityIcon = config.icon;
 
+  const canToggleCheckbox = isPm || isAssignee; // non-PM: hanya assignee (dan tanpa izin done)
   return (
     <div 
       draggable={canModifyStatus}
@@ -118,16 +127,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     >
       {/* Checkbox status */}
       <button 
-        onClick={(e) => {
-          e.stopPropagation();
-          handleToggleLocal();
-        }} 
-        className={`mt-0.5 transition-colors flex-shrink-0 ${
-          task.status === "done" ? "text-blue-600 hover:text-blue-800" : "text-slate-400 hover:text-slate-600"
-        }`}
       >
-        {task.status === "done" ? <CheckSquare size={15} /> : <Square size={15} />}
-      </button>
+      {canToggleCheckbox ? (
+        <button 
+          onClick={handleToggleLocal} 
+          className={`mt-0.5 transition-colors flex-shrink-0 ${
+            task.status === "done" ? "text-blue-600 hover:text-blue-800" : "text-slate-400 hover:text-slate-600"
+          }`}
+        >
+          {task.status === "done" ? <CheckSquare size={15} /> : <Square size={15} />}
+        </button>
+      ) : (
 
       {/* Content */}
       <div className="flex-1 flex flex-col gap-2 min-w-0">
@@ -182,14 +192,20 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                         { key: "inreview", label: "In Review" },
                         { key: "done", label: "Done" }
                       ].map((opt) => (
+
                         <button
                           key={opt.key}
                           disabled={task.status === opt.key}
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          disabled={task.status === opt.key || (!canMemberMoveToDone && opt.key === "done")}
                             setActiveMenu(false);
-                            handleMoveStatusLocal(opt.key as any);
+                              showToast.error("Member biasa hanya bisa sampai status In Review.");
+                              return;
+                            }
+
+                            handleMoveStatusLocal(opt.key as Task["status"]);
                           }}
+
+
                           className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium"
                         >
                           Ke {opt.label}

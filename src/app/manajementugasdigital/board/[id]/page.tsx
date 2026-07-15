@@ -296,7 +296,15 @@ export default function KanbanBoardPage() {
       done: "todo",
     };
     const nextFStatus = nextStatusMap[task.status];
+
+    // Non-PM: tidak boleh mengubah ke DONE
+    if (!isPm && nextFStatus === "done") {
+      showToast.error("Member biasa hanya bisa sampai status In Review.");
+      return;
+    }
+
     const success = await modifyTaskStatus(task, nextFStatus);
+
 
     if (success) {
       showToast.success(`Tugas dipindahkan ke status ${nextFStatus === "done" ? "Done" : "To Do"}`);
@@ -421,13 +429,20 @@ export default function KanbanBoardPage() {
     if (groupBy === "status") {
       const targetStatus = colKey as Task["status"];
       if (taskToMove.status === targetStatus) return;
-      
+
+      // Non-PM: tidak boleh mengubah ke DONE
+      if (!isPm && targetStatus === "done") {
+        showToast.error("Member biasa hanya bisa sampai status In Review.");
+        return;
+      }
+
       const success = await modifyTaskStatus(taskToMove, targetStatus);
       if (success) {
         showToast.success("Status tugas berhasil diperbarui.");
       } else {
         showToast.error("Gagal memindahkan tugas.");
       }
+
     } else if (groupBy === "priority") {
       const targetPriority = colKey as Task["priority"];
       if (taskToMove.priority === targetPriority) return;
