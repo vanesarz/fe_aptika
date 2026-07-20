@@ -357,7 +357,8 @@ export default function KanbanBoardPage() {
     const success = await modifyTaskStatus(task, nextFStatus);
 
     if (success) {
-      showToast.success(`Tugas dipindahkan ke status ${nextFStatus === "done" ? "Done" : "To Do"}`);
+      const statusLabel: Record<string, string> = { todo: "To Do", inprogress: "In Progress", inreview: "In Review" };
+      showToast.success(`Tugas dipindahkan ke status ${statusLabel[nextFStatus] ?? nextFStatus}`);
     } else {
       showToast.error("Gagal mengubah status tugas.");
     }
