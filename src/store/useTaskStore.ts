@@ -271,9 +271,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       await updateTaskStatus(task.id, mapFrontendToBackendStatus(nextFStatus));
       get().addNotification("Update Tugas", `Tugas "${task.title}" dipindahkan ke status ${nextFStatus.toUpperCase()}.`);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update status:", err);
       set({ tasks: prevTasks }); // Revert
+      if (err?.response?.status === 403) {
+        showToast.error("This task has already been completed.");
+      }
       return false;
     }
   },
@@ -291,9 +294,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       await updateTaskStatus(taskId, mapFrontendToBackendStatus(nextFStatus));
       get().addNotification("Update Tugas", `Tugas "${task.title}" dipindahkan ke status ${nextFStatus.toUpperCase()}.`);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update status:", err);
       set({ tasks: prevTasks }); // Revert
+      if (err?.response?.status === 403) {
+        showToast.error("This task has already been completed.");
+      }
       return false;
     }
   },
@@ -317,9 +323,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       await updateTask(taskId, { assigned_to: assigneeId });
       get().addNotification("Tugas Ditugaskan", `Tugas "${task.title}" ditugaskan ke ${targetName || "Unassigned"}.`);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to assign task:", err);
       set({ tasks: prevTasks }); // Revert
+      if (err?.response?.status === 403) {
+        showToast.error("This task has already been completed.");
+      }
       return false;
     }
   },
@@ -337,9 +346,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       await deleteTask(taskId);
       get().addNotification("Tugas Dihapus", `Tugas "${task.title}" telah dihapus.`);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to delete task:", err);
       set({ tasks: prevTasks }); // Revert
+      if (err?.response?.status === 403) {
+        showToast.error("This task has already been completed.");
+      }
       return false;
     }
   },
@@ -365,8 +377,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       await approveTaskApi(taskId);
       get().addNotification("Tugas Disetujui", `Tugas "${task.title}" telah disetujui.`);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to approve task:", err);
+      if (err?.response?.status === 403) {
+        showToast.error("This task has already been completed.");
+      }
       return false;
     }
   },
