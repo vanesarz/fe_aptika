@@ -22,7 +22,7 @@ import Avatar from "@/components/ui/Avatar";
 
 const TEAMS = [
   { name: "Integrasi Interoperabilitas", key: "integrasiinteroperabilitas", icon: Network },
-  { name: "Surat Perjalanan Dinas (SPD)", key: "spd", icon: FileText },
+  { name: "Administrasi Surat", key: "administrasisurat", icon: FileText },
   { name: "Pengelolaan Aplikasi", key: "pengelolaanaplikasi", icon: Layers },
   { name: "Rekayasa Aplikasi", key: "rekayasaaplikasi", icon: Cpu },
   { name: "Sidebar Jabar", key: "sidebarjabar", icon: LayoutTemplate },
@@ -71,7 +71,7 @@ export default function Sidebar() {
 
   const handleTeamClick = (key: string) => {
     setIsOpen(false);
-    if (key === "spd" || key === "manajementugasdigital") {
+    if (key === "administrasisurat" || key === "manajementugasdigital") {
       router.push(`/${key}`);
     } else {
       router.push(`/${key}/dashboard`);
