@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getPerubahanItByRfc, updatePerubahanItStatus, assignPerubahanIt } from '@/services/api';
 
 export default function DetailPengerjaanAdmin() {
   const params = useParams();
@@ -25,14 +26,15 @@ const [showAssignModal, setShowAssignModal] = useState(false);
 
   // Ambil data detail permohonan dari API Laravel
   const fetchTicketDetail = () => {
-    fetch(`http://localhost:8000/api/form-perubahan-it/ticket/${rfc}`)
-      .then((res) => res.json())
-      .then((data) => {
+    getPerubahanItByRfc(rfc)
+      .then((data: any) => {
         setTicket(data);
-        // Set default status di select modal sesuai status tiket saat ini
         if (data && data.status) {
           setSelectedStatus(data.status);
         }
+      })
+      .catch((err: any) => {
+        console.error(err);
       });
   };
 
@@ -48,24 +50,14 @@ const [showAssignModal, setShowAssignModal] = useState(false);
     
     setIsSavingStatus(true);
     try {
-      // Endpoint PATCH status disesuaikan dengan API backend Laravel Anda
-      const res = await fetch(`http://localhost:8000/api/form-perubahan-it/${ticket.id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: selectedStatus.toLowerCase() }),
-      });
-
-      if (res.ok) {
+      const result = await updatePerubahanItStatus(ticket.id, { status: selectedStatus.toLowerCase() });
+      if (result) {
         setIsStatusModalOpen(false);
-        // Refresh data di layar setelah berhasil disimpan
         fetchTicketDetail(); 
         alert('Status tiket berhasil diperbarui!');
-      } else {
-        alert(`Gagal memperbarui status. HTTP ${res.status}`);
       }
-    } catch (err) {
+    } catch (err: any) {
+      alert(`Gagal memperbarui status. HTTP ${err?.response?.status || 'Error'}`);
       alert('Terjadi kesalahan jaringan saat menghubungi API.');
     } finally {
       setIsSavingStatus(false);
@@ -101,32 +93,18 @@ const handleAssign = async () => {
   }
 
   try {
-    const res = await fetch(
-      `http://localhost:8000/api/form-perubahan-it/${ticket.id}/assign`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assigned_to: selectedAgent,
-          catatan: assignNote,
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      throw new Error();
+    const result = await assignPerubahanIt(ticket.id, {
+      assigned_to: selectedAgent,
+      catatan: assignNote,
+    });
+    
+    if (result) {
+      setShowAssignModal(false);
+      setSelectedAgent("");
+      setAssignNote("");
+      fetchTicketDetail();
+      alert("Agen berhasil ditugaskan.");
     }
-
-    setShowAssignModal(false);
-
-    setSelectedAgent("");
-    setAssignNote("");
-
-    fetchTicketDetail();
-
-    alert("Agen berhasil ditugaskan.");
   } catch (err) {
     alert("Gagal menugaskan agen.");
   }

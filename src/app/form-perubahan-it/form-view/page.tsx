@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import SignaturePad, { SignaturePadRef } from './Signaturepad';
+import { getPerubahanItOpd, createPerubahanIt } from '@/services/api';
 
 const inputCls = "block w-full rounded-md border border-[#E2E8F0] bg-[#EFF4FF] px-4 py-3 text-[13px] text-slate-800 placeholder:text-[#94a3b8] focus:border-[#153289] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#153289]";
 const labelCls = "mb-2 block text-[11px] font-bold uppercase tracking-wider text-[#1e293b]";
@@ -61,8 +62,7 @@ export default function FormView({ onSuccess }: { onSuccess: (data: any) => void
   const [pesanError, setPesanError] = useState<string>("");
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/form-perubahan-it/opd`) 
-      .then(res => res.json())
+    getPerubahanItOpd()
       .then(data => setOpdList(data))
       .catch(err => console.error(err));
   }, []);
@@ -150,16 +150,10 @@ export default function FormView({ onSuccess }: { onSuccess: (data: any) => void
     });
 
     try {
-      const response = await fetch(`${API_BASE_URL}/form-perubahan-it`, {
-        method: 'POST',
-        headers: { 'Accept': 'application/json' },
-        body: formData,
-      });
-
-      const result = await response.json();
+      const result = await createPerubahanIt(formData);
       console.log("RESULT BACKEND:", result);
       
-      if (response.ok) {
+      if (result) {
         const selectedOpdName = opdList.find(o => o.id.toString() === perangkatDaerahId)?.name || '-';
         const displayData = {
           ...result,
@@ -173,13 +167,12 @@ export default function FormView({ onSuccess }: { onSuccess: (data: any) => void
         };
         setShowConfirmModal(false);
         onSuccess(displayData);
-      } else {
-        const errorMsg = result.errors ? Object.values(result.errors).flat().join('\n') : (result.error || result.message);
-        alert("Gagal mengirim data:\n" + errorMsg);
-        setShowConfirmModal(false);
       }
-    } catch (error) {
-      alert("Terjadi kesalahan jaringan.");
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.errors 
+        ? Object.values(error.response.data.errors).flat().join('\n') 
+        : (error?.response?.data?.error || error?.response?.data?.message || "Terjadi kesalahan jaringan.");
+      alert("Gagal mengirim data:\n" + errorMsg);
       setShowConfirmModal(false);
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FormPerubahanIT } from './types';
 import { useRouter } from 'next/navigation';
+import { updatePerubahanItStatus } from '@/services/api';
 interface DetailViewProps {
   data: FormPerubahanIT;
   apiUrl?: string;
@@ -79,12 +80,8 @@ export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
     }
 
     try {
-      const res = await fetch(`${apiUrl}/form-perubahan-it/${data.id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
+      const result = await updatePerubahanItStatus(data.id, { status: newStatus });
+      if (result) {
         setUpdatingStatus(null);
         // Beri sedikit delay agar perubahan badge terlihat dulu sebelum kembali ke daftar
         setTimeout(() => onBack(), 400);
@@ -92,9 +89,9 @@ export default function DetailView({ data, apiUrl, onBack }: DetailViewProps) {
         // Rollback status lokal jika request gagal
         setLocalStatus(data.status ?? null);
         setUpdatingStatus(null);
-        alert(`Gagal memperbarui status. Kode Error: HTTP ${res.status}`);
+        alert(`Gagal memperbarui status.`);
       }
-    } catch (err) {
+    } catch (err: any) {
       setLocalStatus(data.status ?? null);
       setUpdatingStatus(null);
       alert('Terjadi kesalahan jaringan saat menghubungi API backend.');
@@ -209,20 +206,9 @@ console.log('Status:', currentStatus);
 console.log('Data:', data);
 const handleMulaiPengerjaan = async () => {
   try {
-    const res = await fetch(
-      `http://localhost:8000/api/form-perubahan-it/${data.id}/status`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'pengerjaan',
-        }),
-      }
-    );
+    const result = await updatePerubahanItStatus(data.id, { status: 'pengerjaan' });
 
-    if (!res.ok) {
+    if (!result) {
       throw new Error('Gagal mengubah status');
     }
 

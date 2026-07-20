@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getPerubahanItByRfc } from '@/services/api';
 
 export default function AdminDetailTicketPage() {
   const params = useParams();
@@ -17,11 +18,13 @@ export default function AdminDetailTicketPage() {
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
 
   useEffect(() => {
-    // Sesuaikan URL fetch dengan API Backend Anda
-    fetch(`http://localhost:8000/api/form-perubahan-it/ticket/${rfc}`)
-      .then((res) => res.json())
-      .then((data) => {
+    if (!rfc) return;
+    getPerubahanItByRfc(rfc)
+      .then((data: any) => {
         setTicket(data);
+      })
+      .catch((err: any) => {
+        console.error(err);
       });
   }, [rfc]);
 

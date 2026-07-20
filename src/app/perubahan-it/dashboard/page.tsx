@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FormPerubahanIT, StatusType } from './types';
 import DetailView from './DetailView';
+import { getPerubahanItList, getPerubahanItById } from '@/services/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -41,10 +42,8 @@ export default function AdminPermohonanPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/form-perubahan-it`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const rows: FormPerubahanIT[] = Array.isArray(json) ? json : json.data ?? [];
+      const data = await getPerubahanItList();
+      const rows: FormPerubahanIT[] = Array.isArray(data) ? data : data.data ?? [];
       setData(rows);
     } catch (e) {
       setError('Tidak dapat terhubung ke API Laravel.');
@@ -77,9 +76,7 @@ export default function AdminPermohonanPage() {
   const handleOpenDetail = async (row: FormPerubahanIT) => {
     setDetailLoading(true);
     try {
-      const res = await fetch(`${API_URL}/form-perubahan-it/${row.id}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const detail: FormPerubahanIT = await res.json();
+      const detail = await getPerubahanItById(row.id);
       setSelectedData(detail);
     } catch {
       // Fallback: pakai data dari list jika fetch detail gagal

@@ -55,7 +55,7 @@ export default function AdministrasiSuratPage() {
       iconBg: "bg-blue-100",
       actionText: "Pilih Template",
       actionColor: "text-blue-600",
-      path: "#"
+      path: "perubahan-it/dashboard"
     }
   ];
 
@@ -82,15 +82,15 @@ export default function AdministrasiSuratPage() {
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${card.iconBg}`}>
               {card.icon}
             </div>
-            
+
             <h3 className="text-base font-bold text-slate-800 mb-3">
               {card.title}
             </h3>
-            
+
             <p className="text-[13px] text-slate-500 leading-relaxed flex-grow">
               {card.desc}
             </p>
-            
+
             <div className={`flex items-center gap-1.5 mt-6 font-semibold text-[13px] ${card.actionColor}`}>
               <span>{card.actionText}</span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { statusMap } from '../../utils/ticket-status';
+import { getPerubahanItByRfc } from '@/services/api';
 
 export default function DetailTicketPage() {
   const params = useParams();
@@ -12,10 +13,14 @@ export default function DetailTicketPage() {
   const [ticket, setTicket] = useState<any>(null);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/form-perubahan-it/ticket/${rfc}`)
-      .then((res) => res.json())
-      .then((data) => {
+    if (!rfc) return;
+    getPerubahanItByRfc(rfc)
+      .then((data: any) => {
         setTicket(data);
+      })
+      .catch((err: any) => {
+        console.error("Failed to load ticket", err);
+        setTicket(null);
       });
   }, [rfc]);
 

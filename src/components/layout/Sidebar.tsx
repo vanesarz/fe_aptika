@@ -3,18 +3,17 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/services/api";
-import { 
-  Network, 
-  FileText, 
-  Layers, 
-  Cpu, 
-  LayoutTemplate, 
-  Smartphone, 
-  Database, 
-  Briefcase, 
-  Users, 
-  LogOut, 
-  X,
+import {
+  Network,
+  FileText,
+  Layers,
+  Cpu,
+  LayoutTemplate,
+  Smartphone,
+  Database,
+  Briefcase,
+  Users,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -29,7 +28,6 @@ const TEAMS = [
   { name: "Smart Jabar", key: "smartjabar", icon: Smartphone },
   { name: "Sada Jabar", key: "sadajabar", icon: Database },
   { name: "Manajemen Tugas Digital", key: "manajementugasdigital", icon: Briefcase },
-  { name: "Permintaan Perubahan IT", key: "perubahan-it" },
   { name: "Magang", key: "magang", icon: Users },
 ];
 
@@ -81,11 +79,11 @@ export default function Sidebar() {
   };
 
   const handleLogout = async () => {
-    try { 
-      await logout(); 
+    try {
+      await logout();
       // Also delete cookie
       document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    } catch {}
+    } catch { }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     router.push("/login");
@@ -95,7 +93,7 @@ export default function Sidebar() {
     <>
       {/* Hamburger Toggle Button for Mobile/Tablet */}
       {!isOpen && (
-        <button 
+        <button
           className="fixed top-4 left-4 z-50 flex items-center justify-center lg:hidden w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
           onClick={toggleSidebar}
           aria-label="Toggle Menu"
@@ -106,7 +104,7 @@ export default function Sidebar() {
 
       {/* Overlay Backdrop for Mobile/Tablet */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden transition-opacity duration-200"
           onClick={() => setIsOpen(false)}
         />
@@ -121,11 +119,11 @@ export default function Sidebar() {
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Brand Header */}
-        <div 
+        <div
           className={`flex items-center justify-between border-b border-white/5 ${isCollapsed ? "px-3 py-5" : "px-6 py-6"}`}
         >
           {isCollapsed ? (
-            <button 
+            <button
               onClick={toggleSidebar}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all animate-in fade-in duration-200"
               title="Expand Sidebar"
@@ -134,7 +132,7 @@ export default function Sidebar() {
             </button>
           ) : (
             <div className="flex items-center justify-between w-full">
-              <div 
+              <div
                 className="cursor-pointer flex-grow animate-in fade-in duration-200"
                 onClick={() => router.push("/rekayasaaplikasi/dashboard")}
               >
@@ -145,7 +143,7 @@ export default function Sidebar() {
                   Rekap Data Aptika
                 </p>
               </div>
-              <button 
+              <button
                 onClick={toggleSidebar}
                 className="flex p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all ml-2"
                 title="Collapse Sidebar"
@@ -167,7 +165,7 @@ export default function Sidebar() {
             )}
             <div className="pt-2 space-y-0.5">
               {TEAMS.map((team) => {
-                const Icon = team.icon || FileText;
+                const Icon = team.icon as any;
                 const isActive = activeSegment === team.key;
                 return (
                   <button
@@ -176,8 +174,8 @@ export default function Sidebar() {
                       w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-semibold
                       transition-all duration-150 select-none outline-none group
                       ${isCollapsed ? "justify-center px-3" : ""}
-                      ${isActive 
-                        ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20" 
+                      ${isActive
+                        ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20"
                         : "text-slate-400 hover:bg-white/5 hover:text-white"
                       }
                     `}
@@ -208,8 +206,8 @@ export default function Sidebar() {
                     w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-semibold
                     transition-all duration-150 select-none outline-none group
                     ${isCollapsed ? "justify-center px-3" : ""}
-                    ${activeSegment === "admin" 
-                      ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20" 
+                    ${activeSegment === "admin"
+                      ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20"
                       : "text-slate-400 hover:bg-white/5 hover:text-white"
                     }
                   `}
@@ -240,7 +238,7 @@ export default function Sidebar() {
               </div>
             )}
           </div>
-          <button 
+          <button
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold ${isCollapsed ? "justify-center" : ""}`}
             onClick={handleLogout}
           >

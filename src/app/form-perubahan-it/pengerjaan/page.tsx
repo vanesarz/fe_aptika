@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getPerubahanItList } from '@/services/api';
 
 export default function DaftarPengerjaanAdmin() {
   const router = useRouter();
@@ -10,10 +11,8 @@ export default function DaftarPengerjaanAdmin() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Sesuaikan endpoint ini jika perlu
-    fetch('http://localhost:8000/api/form-perubahan-it')
-      .then((res) => res.json())
-      .then((data) => {
+    getPerubahanItList()
+      .then((data: any) => {
         const rows = Array.isArray(data) ? data : data.data ?? [];
         setTickets(rows);
         setLoading(false);

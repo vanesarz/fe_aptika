@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import FormView from './form-view/page';
 import SuccessView from './form-sukses/page';
 import { useRouter } from 'next/navigation';
+import { getPerubahanItList } from '@/services/api';
 
 export default function PagePerubahanTI() {
   const router = useRouter();
@@ -26,20 +27,7 @@ export default function PagePerubahanTI() {
     try {
       setLoading(true);
 
-      const res = await fetch(
-        'http://localhost:8000/api/form-perubahan-it',
-        {
-          cache: 'no-store',
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(
-          'Gagal mengambil data tiket'
-        );
-      }
-
-      const data = await res.json();
+      const data = await getPerubahanItList();
 
       if (Array.isArray(data.data)) {
         setTickets(data.data);
