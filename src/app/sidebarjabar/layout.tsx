@@ -1,22 +1,18 @@
 "use client";
 
-import Sidebar from "@/components/layout/Sidebar";
+import MainLayout from "@/components/layout/MainLayout";
 
-export default function TeamLayout({
+export default function SidebarJabarLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <Sidebar />
-      <main style={{
-        flex: 1,
-        overflowY: "auto",
-        backgroundColor: "#f1f5f9",
-      }}>
-        {children}
-      </main>
-    </div>
+    <MainLayout
+      title="Sidebar Jabar"
+      subtitle="Kelola konfigurasi widget & menu Sidebar Jawa Barat"
+    >
+      {children}
+    </MainLayout>
   );
 }

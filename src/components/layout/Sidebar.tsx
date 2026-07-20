@@ -3,16 +3,34 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/services/api";
+import { 
+  Network, 
+  FileText, 
+  Layers, 
+  Cpu, 
+  LayoutTemplate, 
+  Smartphone, 
+  Database, 
+  Briefcase, 
+  Users, 
+  LogOut, 
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 
-// ── Key harus sama persis dengan nama folder di src/app/
 const TEAMS = [
-  { name: "Integrasi Interoperabilitas", key: "integrasiinteroperabilitas" },
-  { name: "Pengelolaan Aplikasi",        key: "pengelolaanaplikasi" },
-  { name: "Rekayasa Aplikasi",           key: "rekayasaaplikasi" },
-  { name: "Sidebar Jabar",               key: "sidebarjabar" },
-  { name: "Smart Jabar",                 key: "smartjabar" },
-  { name: "Sada Jabar",                   key: "sadajabar" },
-  { name: "Permintaan Perubahan IT",              key: "perubahan-it" },
+  { name: "Integrasi Interoperabilitas", key: "integrasiinteroperabilitas", icon: Network },
+  { name: "Administrasi Surat", key: "administrasisurat", icon: FileText },
+  { name: "Pengelolaan Aplikasi", key: "pengelolaanaplikasi", icon: Layers },
+  { name: "Rekayasa Aplikasi", key: "rekayasaaplikasi", icon: Cpu },
+  { name: "Sidebar Jabar", key: "sidebarjabar", icon: LayoutTemplate },
+  { name: "Smart Jabar", key: "smartjabar", icon: Smartphone },
+  { name: "Sada Jabar", key: "sadajabar", icon: Database },
+  { name: "Manajemen Tugas Digital", key: "manajementugasdigital", icon: Briefcase },
+  { name: "Permintaan Perubahan IT", key: "perubahan-it" },
+  { name: "Magang", key: "magang", icon: Users },
 ];
 
 export default function Sidebar() {
@@ -20,6 +38,8 @@ export default function Sidebar() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [userName, setUserName] = useState("User");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -27,6 +47,7 @@ export default function Sidebar() {
         const uStr = localStorage.getItem("user");
         if (uStr) {
           const uObj = JSON.parse(uStr);
+          setUserName(uObj?.name || "User");
           if (uObj?.role === "admin") {
             setIsAdmin(true);
           }
@@ -37,16 +58,34 @@ export default function Sidebar() {
     }
   }, []);
 
-  // Ambil segment pertama URL: /rekayasaaplikasi/dashboard → "rekayasaaplikasi"
-  const activeTeam = pathname.split("/")[1] || "rekayasaaplikasi";
+  const activeSegment = pathname.split("/")[1] || "rekayasaaplikasi";
+
+  const toggleSidebar = () => {
+    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+      setIsCollapsed((prev) => !prev);
+      setIsOpen(false);
+      return;
+    }
+
+    setIsOpen((prev) => !prev);
+    setIsCollapsed(false);
+  };
 
   const handleTeamClick = (key: string) => {
     setIsOpen(false);
-    router.push(`/${key}/dashboard`);
+    if (key === "administrasisurat" || key === "manajementugasdigital") {
+      router.push(`/${key}`);
+    } else {
+      router.push(`/${key}/dashboard`);
+    }
   };
 
   const handleLogout = async () => {
-    try { await logout(); } catch {}
+    try { 
+      await logout(); 
+      // Also delete cookie
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    } catch {}
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     router.push("/login");
@@ -54,237 +93,162 @@ export default function Sidebar() {
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
-        .sidebar-wrap {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          width: 235px;
-          height: 100vh;
-          position: sticky;
-          top: 0;
-          flex-shrink: 0;
-          display: flex;
-          flex-direction: column;
-          background: linear-gradient(175deg, #0f2540 0%, #1a3a6e 50%, #1d4ed8 100%);
-          overflow-y: auto;
-          overflow-x: hidden;
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .sidebar-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 22px 18px 18px;
-          border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-        
-        .sidebar-logo-name { font-size: 14px; font-weight: 800; color: white; letter-spacing: 1px; line-height: 1.2; }
-        .sidebar-logo-sub  { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; letter-spacing: 0.3px; }
-        
-        .sidebar-section   { padding: 14px 14px 4px; }
-        
-        .sidebar-section-label {
-          font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.35);
-          letter-spacing: 1.2px; text-transform: uppercase;
-          padding: 0 6px; margin-bottom: 6px;
-        }
-        
-        .sidebar-item {
-          display: flex; align-items: center; width: 100%;
-          padding: 9px 12px; border-radius: 8px; border: none;
-          cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 13px; font-weight: 400;
-          color: rgba(255,255,255,0.75); background: transparent;
-          text-align: left; transition: all 0.15s ease;
-          margin-bottom: 1px; gap: 10px;
-        }
-        
-        .sidebar-item:hover { background: rgba(255,255,255,0.08); color: white; }
-        
-        .sidebar-item.active {
-          background: rgba(255,255,255,0.15); color: white;
-          font-weight: 600; border-left: 2px solid #38bdf8;
-        }
-        
-        .sidebar-item-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: rgba(255,255,255,0.3); flex-shrink: 0;
-        }
-        
-        .sidebar-item.active .sidebar-item-dot {
-          background: #38bdf8;
-          box-shadow: 0 0 6px rgba(56,189,248,0.8);
-        }
-        
-        .sidebar-spacer { flex: 1; }
-        
-        .sidebar-footer {
-          padding: 8px 14px 20px;
-          border-top: 1px solid rgba(255,255,255,0.08);
-        }
-        
-        .sidebar-logout {
-          display: flex; align-items: center; gap: 10px; width: 100%;
-          padding: 9px 12px; border-radius: 8px; border: none; cursor: pointer;
-          font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
-          font-weight: 400; color: rgba(255,255,255,0.5); background: transparent;
-          text-align: left; transition: all 0.15s ease;
-        }
-        
-        .sidebar-logout:hover { background: rgba(255,100,100,0.12); color: #fca5a5; }
+      {/* Hamburger Toggle Button for Mobile/Tablet */}
+      {!isOpen && (
+        <button 
+          className="fixed top-4 left-4 z-50 flex items-center justify-center lg:hidden w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
+          onClick={toggleSidebar}
+          aria-label="Toggle Menu"
+        >
+          <PanelLeftOpen size={20} />
+        </button>
+      )}
 
-        /* Hamburger Toggle Button */
-        .sidebar-mobile-toggle {
-          display: none;
-          position: fixed;
-          top: 16px;
-          left: 16px;
-          z-index: 1001;
-          background: #0f2540;
-          color: white;
-          border: 1px solid rgba(255,255,255,0.15);
-          border-radius: 8px;
-          width: 42px;
-          height: 42px;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(15,37,64,0.15);
-          transition: all 0.2s ease;
-        }
-        
-        .sidebar-mobile-toggle:hover {
-          background: #1a3a6e;
-        }
-        
-        .sidebar-mobile-backdrop {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(15,23,42,0.4);
-          backdrop-filter: blur(4px);
-          z-index: 998;
-        }
-
-        @media (max-width: 768px) {
-          .sidebar-mobile-toggle {
-            display: flex;
-          }
-          
-          .sidebar-mobile-backdrop {
-            display: block;
-          }
-          
-          .sidebar-wrap {
-            position: fixed;
-            left: 0;
-            top: 0;
-            z-index: 999;
-            transform: translateX(-100%);
-            box-shadow: 4px 0 25px rgba(0,0,0,0.15);
-          }
-          
-          .sidebar-wrap.open {
-            transform: translateX(0);
-          }
-          
-          main {
-            padding-top: 72px !important;
-            padding-left: 16px !important;
-            padding-right: 16px !important;
-          }
-        }
-      `}</style>
-
-      {/* Toggle Button for Mobile */}
-      <button 
-        className="sidebar-mobile-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle Menu"
-      >
-        {isOpen ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        )}
-      </button>
-
-      {/* Overlay Backdrop for Mobile */}
+      {/* Overlay Backdrop for Mobile/Tablet */}
       {isOpen && (
         <div 
-          className="sidebar-mobile-backdrop"
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden transition-opacity duration-200"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      <div className={`sidebar-wrap ${isOpen ? "open" : ""}`}>
-
-        {/* LOGO */}
-        <div className="sidebar-logo">
-          <div>
-            <div className="sidebar-logo-name">Aptika Tools</div>
-            <div className="sidebar-logo-sub">Rekap Data Aptika</div>
-          </div>
+      {/* Sidebar Navigation */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 flex flex-col h-screen
+        bg-[#0b2146] text-white border-r border-slate-800
+        transition-all duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:flex-shrink-0
+        ${isCollapsed ? "w-[76px]" : "w-[260px]"}
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+      `}>
+        {/* Brand Header */}
+        <div 
+          className={`flex items-center justify-between border-b border-white/5 ${isCollapsed ? "px-3 py-5" : "px-6 py-6"}`}
+        >
+          {isCollapsed ? (
+            <button 
+              onClick={toggleSidebar}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all animate-in fade-in duration-200"
+              title="Expand Sidebar"
+            >
+              <PanelLeftOpen size={20} />
+            </button>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <div 
+                className="cursor-pointer flex-grow animate-in fade-in duration-200"
+                onClick={() => router.push("/rekayasaaplikasi/dashboard")}
+              >
+                <h1 className="text-[15px] font-extrabold tracking-wide uppercase bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                  Aptika Tools
+                </h1>
+                <p className="text-[10px] font-semibold text-slate-400 tracking-wider mt-0.5">
+                  Rekap Data Aptika
+                </p>
+              </div>
+              <button 
+                onClick={toggleSidebar}
+                className="flex p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all ml-2"
+                title="Collapse Sidebar"
+              >
+                <PanelLeftClose size={18} />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* TEAMS */}
-        <div className="sidebar-section">
-          <div className="sidebar-section-label">Service</div>
-          {TEAMS.map((team) => (
-            <button
-              key={team.key}
-              className={`sidebar-item ${activeTeam === team.key ? "active" : ""}`}
-              onClick={() => handleTeamClick(team.key)}
-            >
-              {team.name}
-            </button>
-          ))}
+        {/* Navigation Menu List */}
+        <div className="flex-1 overflow-y-auto py-5 px-3 space-y-7 scrollbar-hide">
+          {/* Services Section */}
+          <div className="space-y-1">
+            {!isCollapsed && (
+              <span className="px-4 text-[10px] font-extrabold text-slate-500 tracking-widest uppercase select-none">
+                Service
+              </span>
+            )}
+            <div className="pt-2 space-y-0.5">
+              {TEAMS.map((team) => {
+                const Icon = team.icon;
+                const isActive = activeSegment === team.key;
+                return (
+                  <button
+                    key={team.key}
+                    className={`
+                      w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-semibold
+                      transition-all duration-150 select-none outline-none group
+                      ${isCollapsed ? "justify-center px-3" : ""}
+                      ${isActive 
+                        ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20" 
+                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      }
+                    `}
+                    onClick={() => handleTeamClick(team.key)}
+                  >
+                    <Icon size={16} className={`flex-shrink-0 transition-colors ${isActive ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+                    {!isCollapsed && <span className="flex-1 truncate">{team.name}</span>}
+                    {isActive && (
+                      <span className={`w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(56,189,248,0.8)] ${isCollapsed ? "absolute right-2" : ""}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Admin Panel Section */}
+          {isAdmin && (
+            <div className="space-y-1 pt-4 border-t border-white/5">
+              {!isCollapsed && (
+                <span className="px-4 text-[10px] font-extrabold text-slate-500 tracking-widest uppercase select-none">
+                  Admin Panel
+                </span>
+              )}
+              <div className="pt-2 space-y-0.5">
+                <button
+                  className={`
+                    w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-semibold
+                    transition-all duration-150 select-none outline-none group
+                    ${isCollapsed ? "justify-center px-3" : ""}
+                    ${activeSegment === "admin" 
+                      ? "bg-blue-600/20 text-white shadow-sm border border-blue-500/20" 
+                      : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    }
+                  `}
+                  onClick={() => {
+                    setIsOpen(false);
+                    router.push("/admin/users");
+                  }}
+                >
+                  <Users size={16} className={`flex-shrink-0 transition-colors ${activeSegment === "admin" ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+                  {!isCollapsed && <span className="flex-1 truncate">Manajemen User</span>}
+                  {activeSegment === "admin" && (
+                    <span className={`w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(56,189,248,0.8)] ${isCollapsed ? "absolute right-2" : ""}`} />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ADMIN PANEL */}
-        {isAdmin && (
-          <div className="sidebar-section" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "10px", paddingTop: "10px" }}>
-            <div className="sidebar-section-label">Admin Panel</div>
-            <button
-              className={`sidebar-item ${activeTeam === "admin" ? "active" : ""}`}
-              onClick={() => {
-                setIsOpen(false);
-                router.push("/admin/users");
-              }}
-            >
-              Manajemen User
-            </button>
+        {/* Footer Area with Profile and Logout */}
+        <div className={`p-4 border-t border-white/5 bg-[#081835]/50 flex flex-col gap-3 ${isCollapsed ? "items-center" : ""}`}>
+          <div className={`flex items-center gap-3 px-2 ${isCollapsed ? "justify-center" : ""}`}>
+            <Avatar name={userName} size="sm" />
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0">
+                <h4 className="text-xs font-bold text-white truncate">{userName}</h4>
+                <p className="text-[10px] text-slate-400 truncate">{isAdmin ? "Administrator" : "Developer"}</p>
+              </div>
+            )}
           </div>
-        )}
-
-        <div className="sidebar-spacer" />
-
-        {/* LOGOUT */}
-        <div className="sidebar-footer">
-          <button className="sidebar-logout" onClick={handleLogout}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Logout
+          <button 
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold ${isCollapsed ? "justify-center" : ""}`}
+            onClick={handleLogout}
+          >
+            <LogOut size={14} />
+            {!isCollapsed && "Keluar Aplikasi"}
           </button>
         </div>
-
-      </div>
+      </aside>
     </>
   );
 }

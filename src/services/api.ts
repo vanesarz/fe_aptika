@@ -1,7 +1,8 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
+  //baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -21,6 +22,14 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      try {
+        // Clear cookie token so middleware won't keep redirecting back
+        if (typeof document !== "undefined") {
+          document.cookie = "token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+        }
+      } catch (e) {
+        // ignore
+      }
       window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -38,6 +47,301 @@ export const logout = async () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
 };
+
+// ─── SPD ────────────────────────────────────────────────
+export const normalizeSpdStatus = (status?: string) => {
+  const normalized = (status || "").toLowerCase();
+
+  switch (normalized) {
+    case "draf":
+    case "draft":
+      return "draft";
+    case "diajukan":
+    case "submitted":
+      return "submitted";
+    case "disetujui":
+    case "approved":
+      return "approved";
+    case "dalam proses":
+    case "in_progress":
+    case "in progress":
+      return "in_progress";
+    case "selesai":
+    case "completed":
+      return "completed";
+    default:
+      return "draft";
+  }
+};
+
+export const fromApiSpdItem = (item: any) => {
+  const source = item?.data && typeof item.data === "object" && !Array.isArray(item.data) ? item.data : item;
+  const status = String(source?.status || "draft");
+  const displayStatus = status === "draft"
+    ? "DRAF"
+    : status === "submitted"
+      ? "DIAJUKAN"
+      : status === "approved"
+        ? "DISETUJUI"
+        : status === "completed"
+          ? "SELESAI"
+          : status === "in_progress"
+            ? "DALAM PROSES"
+            : status.toUpperCase();
+
+  const followers = Array.isArray(source?.followers) ? source.followers : Array.isArray(source?.pengikut) ? source.pengikut : [];
+  const mappedPengikut = followers.map((follower: any) => ({
+    nama: follower?.name || follower?.nama || "",
+    tglLahir: follower?.nip || follower?.tglLahir || "",
+    keterangan: follower?.position || follower?.keterangan || "",
+  }));
+
+  return {
+    id: source?.id,
+    pejabatPemberi: source?.orderer_name || source?.pejabatPemberi || "",
+    ordererNip: source?.orderer_nip || source?.ordererNip || "",
+    ordererPosition: source?.orderer_position || source?.ordererPosition || "",
+    nama: source?.employee_name || source?.nama || "",
+    nip: source?.employee_nip || source?.nip || "",
+    pangkat: source?.employee_rank || source?.pangkat || "",
+    jabatan: source?.employee_position || source?.jabatan || "",
+    maksud: source?.purpose || source?.maksud || "",
+    angkutan: source?.transportation || source?.angkutan || "",
+    tempatBerangkat: source?.departure_place || source?.tempatBerangkat || "",
+    tempatTujuan: source?.destination || source?.tempatTujuan || "",
+    tujuan: source?.destination || source?.tempatTujuan || "",
+    tglMulai: source?.start_date || source?.tglMulai || "",
+    tglSelesai: source?.end_date || source?.tglSelesai || "",
+    durasi: source?.durasi || source?.duration || 0,
+    pengikut: mappedPengikut,
+    anggaran: source?.budget_estimate ?? source?.anggaran ?? 0,
+    status: displayStatus,
+    rawStatus: source?.status || "draft",
+    raw: source,
+  };
+};
+
+export const toApiSpdPayload = (payload: any) => {
+  const result: any = {};
+
+  if (payload.pejabatPemberi !== undefined || payload.orderer_name !== undefined) {
+    result.orderer_name = payload.pejabatPemberi ?? payload.orderer_name ?? "";
+  }
+  if (payload.ordererNip !== undefined || payload.orderer_nip !== undefined) {
+    result.orderer_nip = payload.ordererNip ?? payload.orderer_nip ?? "";
+  }
+  if (payload.ordererPosition !== undefined || payload.orderer_position !== undefined) {
+    result.orderer_position = payload.ordererPosition ?? payload.orderer_position ?? "";
+  }
+  if (payload.nama !== undefined || payload.employee_name !== undefined) {
+    result.employee_name = payload.nama ?? payload.employee_name ?? "";
+  }
+  if (payload.nip !== undefined || payload.employee_nip !== undefined) {
+    result.employee_nip = payload.nip ?? payload.employee_nip ?? "";
+  }
+  if (payload.pangkat !== undefined || payload.employee_rank !== undefined) {
+    result.employee_rank = payload.pangkat ?? payload.employee_rank ?? "";
+  }
+  if (payload.jabatan !== undefined || payload.employee_position !== undefined) {
+    result.employee_position = payload.jabatan ?? payload.employee_position ?? "";
+  }
+  if (payload.maksud !== undefined || payload.purpose !== undefined) {
+    result.purpose = payload.maksud ?? payload.purpose ?? "";
+  }
+  if (payload.angkutan !== undefined || payload.transportation !== undefined) {
+    result.transportation = payload.angkutan ?? payload.transportation ?? "";
+  }
+  if (payload.tempatBerangkat !== undefined || payload.departure_place !== undefined) {
+    result.departure_place = payload.tempatBerangkat ?? payload.departure_place ?? "";
+  }
+  if (payload.tempatTujuan !== undefined || payload.destination !== undefined) {
+    result.destination = payload.tempatTujuan ?? payload.destination ?? "";
+    result.tempatTujuan = payload.tempatTujuan ?? payload.destination ?? "";
+  }
+  if (payload.tglMulai !== undefined || payload.start_date !== undefined) {
+    result.start_date = payload.tglMulai ?? payload.start_date ?? "";
+  }
+  if (payload.tglSelesai !== undefined || payload.end_date !== undefined) {
+    result.end_date = payload.tglSelesai ?? payload.end_date ?? "";
+  }
+  if (payload.anggaran !== undefined || payload.budget_estimate !== undefined) {
+    result.budget_estimate = Number(payload.anggaran ?? payload.budget_estimate ?? 0);
+  }
+  if (payload.pengikut !== undefined || payload.followers !== undefined) {
+    result.followers = (payload.pengikut ?? payload.followers ?? []).map((follower: any) => ({
+      name: follower?.name || follower?.nama || "",
+      nip: follower?.nip || follower?.tglLahir || "",
+      position: follower?.position || follower?.keterangan || "",
+    }));
+  }
+  if (payload.status !== undefined) {
+    result.status = normalizeSpdStatus(payload.status);
+  }
+
+  return result;
+};
+
+export const getSpdList = async (params?: { search?: string; status?: string }) => {
+  const res = await api.get("/spd", { params });
+  return res.data;
+};
+
+export const getSpdById = async (id: number) => {
+  const res = await api.get(`/spd/${id}`);
+  return res.data;
+};
+
+export const createSpd = async (payload: any) => {
+  const res = await api.post("/spd", toApiSpdPayload(payload));
+  return res.data;
+};
+
+export const updateSpd = async (id: number, payload: any) => {
+  const res = await api.put(`/spd/${id}`, toApiSpdPayload(payload));
+  return res.data;
+};
+
+export const deleteSpd = async (id: number) => {
+  // Menggunakan POST dengan method spoofing untuk mengakali bug PHP 8.2 pada package Symfony
+  const res = await api.post(`/spd/${id}`, { _method: "DELETE" });
+  return res.data;
+};
+
+export const getSpdStats = async () => {
+  const res = await api.get("/spd/stats");
+  return res.data;
+};
+
+// ─── SPD DETAIL PERJALANAN (API Baru) ──────────────────────
+export const getDetailPerjalananList = async (params?: { search?: string }) => {
+  const res = await api.get("/spd/detail-perjalanan", { params });
+  return res.data;
+};
+
+export const getDetailPerjalananById = async (id: number) => {
+  const res = await api.get(`/spd/detail-perjalanan/${id}`);
+  return res.data;
+};
+
+export const fromApiDetailPerjalanan = (item: any) => {
+  const source =
+    item?.data && typeof item.data === "object" && !Array.isArray(item.data)
+      ? item.data
+      : item;
+
+  const pesertaList = Array.isArray(source?.peserta) ? source.peserta : [];
+  const mainPeserta = pesertaList[0]?.pegawai || {};
+  const followers = pesertaList.slice(1).map((p: any) => ({
+    nama: p?.pegawai?.nama || "",
+    nip: p?.pegawai?.nip || "",
+    pangkat: p?.pegawai?.pangkat || "",
+    jabatan: p?.pegawai?.jabatan || "",
+    role: p?.pegawai?.role || "staff",
+    nomorSpd: p?.nomor_spd || "",
+    tglLahir: p?.pegawai?.tanggal_lahir || "",
+    keterangan: p?.pegawai?.nip || "",
+  }));
+
+  const participants = pesertaList.map((p: any) => ({
+    id: p?.id,
+    nomorSpd: p?.nomor_spd || source?.travel_code || "",
+    nama: p?.pegawai?.nama || "",
+    nip: p?.pegawai?.nip || "",
+    pangkat: p?.pegawai?.pangkat || "",
+    jabatan: p?.pegawai?.jabatan || "",
+    role: p?.pegawai?.role || "staff",
+    tglLahir: p?.pegawai?.tanggal_lahir || "",
+    keterangan: p?.pegawai?.nip || "",
+  }));
+
+  return {
+    id: source?.id,
+    travelCode: source?.travel_code || source?.travelCode || "",
+    noSpd: source?.peserta?.[0]?.nomor_spd || source?.travel_code || "",
+    tujuan: source?.tujuan || source?.destination || "",
+    tempatTujuan: source?.tujuan || source?.destination || "",
+    deskripsi: source?.deskripsi || source?.description || "",
+    maksud: source?.deskripsi || source?.description || "",
+    tempatBerangkat:
+      source?.tempat_berangkat ||
+      source?.departure_place ||
+      source?.tempatBerangkat ||
+      "Bandung",
+    tglMulai:
+      source?.tanggal_berangkat ||
+      source?.tanggal_mulai ||
+      source?.start_date ||
+      source?.tglMulai ||
+      "",
+    tglSelesai:
+      source?.tanggal_kembali ||
+      source?.tanggal_selesai ||
+      source?.end_date ||
+      source?.tglSelesai ||
+      "",
+    status:
+      source?.status === "selesai"
+        ? "SELESAI"
+        : source?.status === "belum_selesai"
+          ? "BELUM SELESAI"
+          : (source?.status || "").toUpperCase(),
+    rawStatus: source?.status,
+    nama: mainPeserta?.nama || "",
+    nip: mainPeserta?.nip || "",
+    pangkat: mainPeserta?.pangkat || "",
+    jabatan: mainPeserta?.jabatan || "",
+    role: mainPeserta?.role || "staff",
+    pengikut: followers,
+    participants: participants,
+    kegiatan: source?.kegiatan || "",
+    subKegiatan: source?.sub_kegiatan || "",
+    kodeRekening: source?.rekening?.kode_rekening || "",
+    pejabatPemberi: source?.rekening?.nama_rekening || "Sekretaris Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
+    angkutan: source?.alat_angkutan || "Kendaraan Dinas",
+    raw: source,
+  };
+};
+
+export const createDetailPerjalanan = async (payload: any) => {
+  const res = await api.post("/spd/detail-perjalanan", payload);
+  return res.data;
+};
+
+export const updateDetailPerjalanan = async (id: number, payload: any) => {
+  const res = await api.put(`/spd/detail-perjalanan/${id}`, payload);
+  return res.data;
+};
+
+export const updateDetailPerjalananStatus = async (id: number, status: "belum_selesai" | "selesai") => {
+  const res = await api.patch(`/spd/detail-perjalanan/${id}/status`, { status });
+  return res.data;
+};
+
+export const deleteDetailPerjalanan = async (id: number) => {
+  const res = await api.delete(`/spd/detail-perjalanan/${id}`);
+  return res.data;
+};
+
+export const getPegawaiList = async () => {
+  const res = await api.get("/spd/pegawai");
+  return res.data;
+};
+
+export const createPegawai = async (payload: any) => {
+  const res = await api.post("/spd/pegawai", payload);
+  return res.data;
+};
+
+export const createSpdPeserta = async (payload: { detail_perjalanan_id: number; pegawai_id: number[] }) => {
+  const res = await api.post("/spd/spd-peserta", payload);
+  return res.data;
+};
+
+export const getRekeningList = async () => {
+  const res = await api.get("/spd/rekening");
+  return res.data;
+};
+
 
 // ─── REPORTS ─────────────────────────────────────────────
 export const getReports = async (team: string, year?: number) => {
@@ -709,3 +1013,161 @@ export const deleteAdminUser = async (id: number) => {
   return res.data;
 };
 
+// ==========================================
+// Projects & Tasks API (Manajemen Tugas Digital)
+// ==========================================
+
+export const getProjects = async () => {
+  const res = await api.get("/task-management/boards");
+  return res.data;
+};
+
+export const createProject = async (payload: { name: string; description: string; deadline: string }) => {
+  // Map frontend form properties to backend Board model
+  const backendPayload = {
+    name: payload.name,
+    description: payload.description,
+    end_date: payload.deadline,
+    status: "active",
+    visibility: "public"
+  };
+  const res = await api.post("/task-management/boards", backendPayload);
+  return res.data;
+};
+
+export const joinProject = async (id: number) => {
+  const res = await api.post(`/task-management/boards/${id}/members/join`);
+  return res.data;
+};
+
+export const getTasks = async (boardId: number) => {
+  const res = await api.get(`/task-management/tasks`, {
+    params: { board_id: boardId }
+  });
+  return res.data;
+};
+
+export const createTask = async (payload: {
+  board_id: number;
+  title: string;
+  priority: "low" | "medium" | "high";
+  status: "todo" | "in_progress" | "in_review" | "done";
+  description?: string;
+  assigned_to?: number | null;
+}) => {
+  const res = await api.post(`/task-management/tasks`, payload);
+  return res.data;
+};
+
+export const updateTaskStatus = async (id: number, status: "todo" | "in_progress" | "in_review" | "done") => {
+  const res = await api.patch(`/task-management/tasks/${id}/status`, { status });
+  return res.data;
+};
+
+export const approveTask = async (id: number) => {
+  const res = await api.patch(`/task-management/tasks/${id}/approve`);
+  return res.data;
+};
+
+export const updateTask = async (id: number, payload: {
+  title?: string;
+  description?: string;
+  priority?: "low" | "medium" | "high";
+  status?: "todo" | "in_progress" | "in_review" | "done";
+  assigned_to?: number | null;
+}) => {
+  const res = await api.put(`/task-management/tasks/${id}`, payload);
+  return res.data;
+};
+
+export const deleteTask = async (id: number) => {
+  const res = await api.delete(`/task-management/tasks/${id}`);
+  return res.data;
+};
+
+export const getBoardMembers = async (boardId: number) => {
+  const res = await api.get(`/task-management/boards/${boardId}/members`);
+  return res.data;
+};
+
+export const updateBoard = async (id: number, payload: {
+  name?: string;
+  description?: string;
+  status?: "active" | "completed" | "archived";
+  visibility?: "private" | "public";
+}) => {
+  const res = await api.put(`/task-management/boards/${id}`, payload);
+  return res.data;
+};
+
+export const getJoinRequests = async (boardId: number) => {
+  const res = await api.get(`/task-management/boards/${boardId}/join-requests`);
+  return res.data;
+};
+
+export const approveJoinRequest = async (boardId: number, userId: number) => {
+  const res = await api.post(`/task-management/boards/${boardId}/members/${userId}/approve`);
+  return res.data;
+};
+
+export const rejectJoinRequest = async (boardId: number, userId: number) => {
+  const res = await api.post(`/task-management/boards/${boardId}/members/${userId}/reject`);
+  return res.data;
+};
+
+// ─── TASK COMMENTS (API) ──────────────────────────────────
+export const getTaskComments = async (taskId: number) => {
+  const res = await api.get("/task-management/task-comments", {
+    params: { task_id: taskId }
+  });
+  return res.data;
+};
+
+export const createTaskComment = async (payload: { task_id: number; comment: string }) => {
+  const res = await api.post("/task-management/task-comments", payload);
+  return res.data;
+};
+
+export const deleteTaskComment = async (id: number) => {
+  const res = await api.delete(`/task-management/task-comments/${id}`);
+  return res.data;
+};
+
+export const getTaskActivities = async (taskId: number) => {
+  const res = await api.get("/task-management/task-activities", {
+    params: { task_id: taskId }
+  });
+  return res.data;
+};
+
+// ─── MAGANG (API) ─────────────────────────────────────────
+export const getMagangList = async () => {
+  const res = await api.get("/magang");
+  return res.data;
+};
+
+export const getMagangById = async (id: number) => {
+  const res = await api.get(`/magang/${id}`);
+  return res.data;
+};
+
+export const createMagang = async (payload: FormData) => {
+  const res = await api.post("/magang", payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+export const updateMagang = async (id: number, payload: FormData) => {
+  // Use POST with _method=PUT for file uploads in Laravel
+  payload.append("_method", "PUT");
+  const res = await api.post(`/magang/${id}`, payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+export const deleteMagang = async (id: number) => {
+  const res = await api.delete(`/magang/${id}`);
+  return res.data;
+};
