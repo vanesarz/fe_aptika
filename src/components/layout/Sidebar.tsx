@@ -29,6 +29,7 @@ const TEAMS = [
   { name: "Smart Jabar", key: "smartjabar", icon: Smartphone },
   { name: "Sada Jabar", key: "sadajabar", icon: Database },
   { name: "Manajemen Tugas Digital", key: "manajementugasdigital", icon: Briefcase },
+  { name: "Permintaan Perubahan IT", key: "perubahan-it" },
   { name: "Magang", key: "magang", icon: Users },
 ];
 
