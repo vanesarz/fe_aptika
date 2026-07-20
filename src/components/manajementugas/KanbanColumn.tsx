@@ -3,6 +3,11 @@ import { Plus, CheckCircle2, Inbox } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import { Task, Project } from "@/store/useTaskStore";
 
+type CurrentUserShape = { id: number; role: string };
+
+type CurrentUserInput = { id?: number; role?: string } | null;
+
+
 interface KanbanColumnProps {
   colKey: string;
   label: string;
@@ -10,8 +15,8 @@ interface KanbanColumnProps {
   isDone?: boolean;
   tasks: Task[];
   project: Project | null;
-  currentUser: any;
-  members: any[];
+  currentUser: CurrentUserInput;
+  members: Array<{ id?: number; role?: string; user?: { id?: number; name?: string } }>;
   isOver: boolean;
   activeInputColumn: string | null;
   newTaskTitle: string;
@@ -25,6 +30,7 @@ interface KanbanColumnProps {
   onDragStart: (e: React.DragEvent, id: number) => void;
   onDragEnd: () => void;
   onToggleStatus: (task: Task) => void;
+  onApprove?: (taskId: number) => void;
   onMoveStatus: (taskId: number, nextStatus: Task["status"]) => void;
   onAssign: (taskId: number, assigneeId: number | null) => void;
   onDelete: (taskId: number) => void;
@@ -59,6 +65,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onDragStart,
   onDragEnd,
   onToggleStatus,
+  onApprove,
   onMoveStatus,
   onAssign,
   onDelete,
@@ -70,7 +77,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   setNewTaskAssignee,
   onOpenDetail,
 }) => {
-  const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
+// Project.created_by may not exist in the mapped Project type; rely on role instead.
+  const isPm = project ? currentUser?.role === "pm" || currentUser?.role === "admin" : false;
 
   return (
     <div 
@@ -101,6 +109,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               currentUser={currentUser}
               members={members}
               onToggleStatus={onToggleStatus}
+              onApprove={onApprove}
               onMoveStatus={onMoveStatus}
               onAssign={onAssign}
               onDelete={onDelete}
@@ -137,7 +146,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                   <span className="text-[10px] text-slate-400 font-bold">Priority:</span>
                   <select
                     value={newTaskPriority}
-                    onChange={(e) => setNewTaskPriority(e.target.value as any)}
+                    onChange={(e) => setNewTaskPriority(e.target.value as "low" | "medium" | "high")}
                     className="text-[10px] text-slate-600 bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 outline-none font-semibold cursor-pointer"
                   >
                     <option value="low">Low</option>
@@ -158,7 +167,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                   >
                     <option value="unassigned">Unassigned</option>
                     {members.map((m) => (
-                      <option key={m.user?.id} value={m.user?.id.toString()}>
+                      <option
+                        key={m.user?.id ?? m.id ?? m.role ?? m.user?.name ?? "member"}
+                        value={(m.user?.id ?? m.id ?? "0").toString()}
+                      >
                         {m.user?.name}
                       </option>
                     ))}

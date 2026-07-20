@@ -146,7 +146,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const isAssignee = task.assigneeId === currentUser?.id;
   const canModify = isPm || isAssignee;
 
+  const isDone = task.status === "done";
+  const isReadOnly = isDone || !canModify;
+
   const handleStatusChange = async (nextStatus: Task["status"]) => {
+    if (isDone) {
+      showToast.error("Completed tasks cannot be modified.");
+      return;
+    }
     if (!canModify) {
       showToast.error("Anda tidak memiliki akses untuk mengubah status tugas ini.");
       return;
@@ -159,6 +166,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   };
 
   const handleSaveDescription = async () => {
+    if (isDone) {
+      showToast.error("Completed tasks cannot be modified.");
+      return;
+    }
     setSavingDescription(true);
     try {
       const success = await onUpdateTask(task.id, { description: editedDescription });
@@ -304,26 +315,33 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Status Dropdown */}
-            <div className="relative group">
-              <select
-                disabled={!canModify}
-                value={task.status}
-                onChange={(e) => handleStatusChange(e.target.value as any)}
-                className={`appearance-none outline-none pl-3.5 pr-8 py-1.5 rounded-full text-xs font-bold border-0 cursor-pointer shadow-sm transition-all focus:ring-2 focus:ring-blue-400/50 ${
-                  task.status === "todo" ? "bg-amber-500 text-white" :
-                  task.status === "inprogress" ? "bg-blue-600 text-white" :
-                  task.status === "inreview" ? "bg-purple-600 text-white" :
-                  "bg-emerald-600 text-white"
-                }`}
-              >
-                <option value="todo" className="bg-white text-slate-700 font-semibold">To Do</option>
-                <option value="inprogress" className="bg-white text-slate-700 font-semibold">In Progress</option>
-                <option value="inreview" className="bg-white text-slate-700 font-semibold">In Review</option>
-                <option value="done" className="bg-white text-slate-700 font-semibold">Done</option>
-              </select>
-              <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/95 pointer-events-none stroke-[3]" />
-            </div>
+            {/* Status Dropdown (hidden when DONE) */}
+            {!isDone && (
+              <div className="relative group">
+                <select
+                  disabled={!canModify}
+                  value={task.status}
+                  onChange={(e) => handleStatusChange(e.target.value as any)}
+                  className={`appearance-none outline-none pl-3.5 pr-8 py-1.5 rounded-full text-xs font-bold border-0 cursor-pointer shadow-sm transition-all focus:ring-2 focus:ring-blue-400/50 ${
+                    task.status === "todo" ? "bg-amber-500 text-white" :
+                    task.status === "inprogress" ? "bg-blue-600 text-white" :
+                    task.status === "inreview" ? "bg-purple-600 text-white" :
+                    "bg-emerald-600 text-white"
+                  }`}
+                >
+                  <option value="todo" className="bg-white text-slate-700 font-semibold">To Do</option>
+                  <option value="inprogress" className="bg-white text-slate-700 font-semibold">In Progress</option>
+                  <option value="inreview" className="bg-white text-slate-700 font-semibold">In Review</option>
+                  <option value="done" className="bg-white text-slate-700 font-semibold">Done</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/95 pointer-events-none stroke-[3]" />
+              </div>
+            )}
+            {isDone && (
+              <span className="inline-flex items-center gap-2 text-xs font-extrabold px-3 py-1.5 rounded-full bg-emerald-600/90 text-white shadow-sm">
+                <span>Completed</span>
+              </span>
+            )}
 
             {/* Close Button */}
             <button 
@@ -345,7 +363,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <FileText size={14} className="text-slate-400" />
                 <span>Description</span>
               </h3>
-              {canModify && !isEditingDescription && (
+              {!isReadOnly && !isEditingDescription && (
                 <button 
                   onClick={() => setIsEditingDescription(true)}
                   className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
@@ -362,7 +380,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   onChange={(e) => setEditedDescription(e.target.value)}
                   placeholder="Describe this task..."
                   rows={4}
-                  className="w-full text-xs p-3 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-y text-slate-800 leading-relaxed"
+                  disabled={isReadOnly}
+                  className="w-full text-xs p-3 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-y text-slate-800 leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed"
                 />
                 <div className="flex items-center gap-2 justify-end">
                   <button
@@ -370,14 +389,15 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       setIsEditingDescription(false);
                       setEditedDescription(task.description || "");
                     }}
-                    className="px-3 py-1.5 rounded-lg text-slate-500 hover:bg-slate-100 text-xs font-semibold transition-colors"
+                    disabled={isReadOnly}
+                    className="px-3 py-1.5 rounded-lg text-slate-500 hover:bg-slate-100 text-xs font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleSaveDescription}
-                    disabled={savingDescription}
-                    className="bg-[#0b2540] text-white px-3.5 py-1.5 rounded-lg hover:bg-[#0a2037] text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5"
+                    disabled={savingDescription || isReadOnly}
+                    className="bg-[#0b2540] text-white px-3.5 py-1.5 rounded-lg hover:bg-[#0a2037] text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {savingDescription ? <Loader2 size={12} className="animate-spin" /> : "Save"}
                   </button>
@@ -403,7 +423,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               </h3>
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                disabled={isReadOnly}
+                className={`text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 + Add attachment
               </button>
@@ -418,14 +439,25 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
             {/* Drop Zone */}
             <div 
-              onDragOver={(e) => { e.preventDefault(); setDraggingFile(true); }}
+              onDragOver={(e) => { 
+                e.preventDefault(); 
+                if (!isReadOnly) setDraggingFile(true);
+              }}
               onDragLeave={() => setDraggingFile(false)}
-              onDrop={handleFileDrop}
-              onClick={() => fileInputRef.current?.click()}
+              onDrop={(e) => {
+                if (isReadOnly) return;
+                handleFileDrop(e);
+              }}
+              onClick={() => {
+                if (isReadOnly) return;
+                fileInputRef.current?.click();
+              }}
               className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                draggingFile 
-                  ? "border-blue-500 bg-blue-50/50" 
-                  : "border-slate-200/80 bg-slate-50 hover:bg-slate-100/50 hover:border-slate-350"
+                isReadOnly
+                  ? "border-slate-200/80 bg-slate-50 opacity-60 cursor-not-allowed"
+                  : draggingFile 
+                    ? "border-blue-500 bg-blue-50/50" 
+                    : "border-slate-200/80 bg-slate-50 hover:bg-slate-100/50 hover:border-slate-350"
               }`}
             >
               <div className="p-3 bg-blue-50 rounded-full text-blue-600">

@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
-  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptika-production.up.railway.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -1061,6 +1061,11 @@ export const createTask = async (payload: {
 
 export const updateTaskStatus = async (id: number, status: "todo" | "in_progress" | "in_review" | "done") => {
   const res = await api.patch(`/task-management/tasks/${id}/status`, { status });
+  return res.data;
+};
+
+export const approveTask = async (id: number) => {
+  const res = await api.patch(`/task-management/tasks/${id}/approve`);
   return res.data;
 };
 

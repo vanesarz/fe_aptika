@@ -5,10 +5,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowLeft,
   ChevronDown,
-  Plus, 
   RefreshCw, 
   SlidersHorizontal,
-  MoreVertical,
   X,
   Search,
   Loader2,
@@ -148,8 +146,10 @@ export default function KanbanBoardPage() {
   }, [projects, projectId]);
 
   const isPm = useMemo(() => {
-    return currentProject ? (currentProject.created_by === currentUser?.id || currentUser?.role === "admin") : false;
-  }, [currentProject, currentUser]);
+    // PM hanya berdasarkan role user, bukan created_by
+    return currentUser?.role === "pm";
+  }, [currentUser]);
+
 
   useEffect(() => {
     loadCurrentUser();
@@ -282,6 +282,26 @@ export default function KanbanBoardPage() {
     }
   };
 
+  const handleApproveTask = async (taskId: number) => {
+    try {
+      const ok = await useTaskStore.getState().approveTask(taskId);
+      if (!ok) return;
+
+      await fetchTasks(projectId);
+
+      const updated = useTaskStore.getState().tasks.find((t) => t.id === taskId);
+      if (updated) setSelectedTask(updated);
+
+      showToast.success("Task successfully approved.");
+    } catch (e: any) {
+      if (e?.response?.status === 403) {
+        showToast.error("This task has already been completed.");
+        return;
+      }
+      showToast.error("Gagal menyetujui tugas.");
+    }
+  };
+
   const handleToggleTaskStatus = async (task: Task) => {
     const isAssignee = task.assigneeId === currentUser?.id;
     if (!isPm && !isAssignee) {
@@ -304,7 +324,6 @@ export default function KanbanBoardPage() {
     }
 
     const success = await modifyTaskStatus(task, nextFStatus);
-
 
     if (success) {
       showToast.success(`Tugas dipindahkan ke status ${nextFStatus === "done" ? "Done" : "To Do"}`);
@@ -782,51 +801,52 @@ export default function KanbanBoardPage() {
           const isOver = draggedOverColumn === col.key;
 
           return (
-            <KanbanColumn
-              key={col.key}
-              colKey={col.key}
-              label={col.label}
-              colorClass={col.color || ""}
-              isDone={col.isDone}
-              tasks={colTasks}
-              project={currentProject}
-              currentUser={currentUser}
-              members={members}
-              isOver={isOver}
-              activeInputColumn={activeInputColumn}
-              newTaskTitle={newTaskTitle}
-              newTaskPriority={newTaskPriority}
-              newTaskAssignee={newTaskAssignee}
-              isCreatingTask={isCreatingTask}
-              groupBy={groupBy}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onToggleStatus={handleToggleTaskStatus}
-              onMoveStatus={handleMoveStatus}
-              onAssign={handleAssignTask}
-              onDelete={handleDeleteTask}
-              onCreateTask={handleCreateTask}
-              onStartCreateTask={(colK) => {
-                setNewTaskTitle("");
-                setNewTaskPriority("medium");
-                setNewTaskAssignee("unassigned");
-                setActiveInputColumn(colK);
-              }}
-              onCancelCreateTask={() => {
-                setActiveInputColumn(null);
-                setNewTaskTitle("");
-              }}
-              setNewTaskTitle={setNewTaskTitle}
-              setNewTaskPriority={setNewTaskPriority}
-              setNewTaskAssignee={setNewTaskAssignee}
-              onOpenDetail={(task) => {
-                setSelectedTask(task);
-                setIsDetailModalOpen(true);
-              }}
-            />
+              <KanbanColumn
+                key={col.key}
+                colKey={col.key}
+                label={col.label}
+                colorClass={col.color || ""}
+                isDone={col.isDone}
+                tasks={colTasks}
+                project={currentProject}
+                currentUser={currentUser}
+                members={members}
+                isOver={isOver}
+                activeInputColumn={activeInputColumn}
+                newTaskTitle={newTaskTitle}
+                newTaskPriority={newTaskPriority}
+                newTaskAssignee={newTaskAssignee}
+                isCreatingTask={isCreatingTask}
+                groupBy={groupBy}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onToggleStatus={handleToggleTaskStatus}
+                onApprove={handleApproveTask}
+                onMoveStatus={handleMoveStatus}
+                onAssign={handleAssignTask}
+                onDelete={handleDeleteTask}
+                onCreateTask={handleCreateTask}
+                onStartCreateTask={(colK) => {
+                  setNewTaskTitle("");
+                  setNewTaskPriority("medium");
+                  setNewTaskAssignee("unassigned");
+                  setActiveInputColumn(colK);
+                }}
+                onCancelCreateTask={() => {
+                  setActiveInputColumn(null);
+                  setNewTaskTitle("");
+                }}
+                setNewTaskTitle={setNewTaskTitle}
+                setNewTaskPriority={setNewTaskPriority}
+                setNewTaskAssignee={setNewTaskAssignee}
+                onOpenDetail={(task) => {
+                  setSelectedTask(task);
+                  setIsDetailModalOpen(true);
+                }}
+              />
           );
         })}
       </div>

@@ -9,7 +9,8 @@ import {
   updateTask, 
   updateBoard,
   joinProject as joinProjectApi, 
-  createProject
+  createProject,
+  approveTask as approveTaskApi
 } from "@/services/api";
 import { showToast } from "@/components/ui/Toast";
 
@@ -99,6 +100,7 @@ interface TaskStore {
   assignTask: (taskId: number, assigneeId: number | null) => Promise<boolean>;
   removeTask: (taskId: number) => Promise<boolean>;
   completeSprint: (projectId: number) => Promise<boolean>;
+  approveTask: (taskId: number) => Promise<boolean>;
   
   addNotification: (title: string, message: string) => void;
   markNotificationAsRead: (id: string) => void;
@@ -351,6 +353,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return true;
     } catch (err) {
       console.error("Failed to complete sprint:", err);
+      return false;
+    }
+  },
+
+  approveTask: async (taskId) => {
+    try {
+      const task = get().tasks.find(t => t.id === taskId);
+      if (!task) return false;
+
+      await approveTaskApi(taskId);
+      get().addNotification("Tugas Disetujui", `Tugas "${task.title}" telah disetujui.`);
+      return true;
+    } catch (err) {
+      console.error("Failed to approve task:", err);
       return false;
     }
   },
