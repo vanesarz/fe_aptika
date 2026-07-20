@@ -5,7 +5,7 @@ import { Task, Project } from "@/store/useTaskStore";
 
 type CurrentUserShape = { id: number; role: string };
 
-type CurrentUserInput = { id?: number; role?: string } | null;
+type CurrentUserInput = { id: number; role: string } | null;
 
 
 interface KanbanColumnProps {
