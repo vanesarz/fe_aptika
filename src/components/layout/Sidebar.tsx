@@ -167,7 +167,7 @@ export default function Sidebar() {
             )}
             <div className="pt-2 space-y-0.5">
               {TEAMS.map((team) => {
-                const Icon = team.icon;
+                const Icon = team.icon || FileText;
                 const isActive = activeSegment === team.key;
                 return (
                   <button
