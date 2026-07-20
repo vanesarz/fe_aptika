@@ -1140,5 +1140,34 @@ export const getTaskActivities = async (taskId: number) => {
   return res.data;
 };
 
+// ─── MAGANG (API) ─────────────────────────────────────────
+export const getMagangList = async () => {
+  const res = await api.get("/magang");
+  return res.data;
+};
 
+export const getMagangById = async (id: number) => {
+  const res = await api.get(`/magang/${id}`);
+  return res.data;
+};
 
+export const createMagang = async (payload: FormData) => {
+  const res = await api.post("/magang", payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+export const updateMagang = async (id: number, payload: FormData) => {
+  // Use POST with _method=PUT for file uploads in Laravel
+  payload.append("_method", "PUT");
+  const res = await api.post(`/magang/${id}`, payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+export const deleteMagang = async (id: number) => {
+  const res = await api.delete(`/magang/${id}`);
+  return res.data;
+};
