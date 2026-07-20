@@ -14,7 +14,8 @@ import {
   ChevronDown,
   Clock,
   History,
-  MessageSquare
+  MessageSquare,
+  Lock
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Task, Project } from "@/store/useTaskStore";
@@ -332,13 +333,16 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <option value="todo" className="bg-white text-slate-700 font-semibold">To Do</option>
                   <option value="inprogress" className="bg-white text-slate-700 font-semibold">In Progress</option>
                   <option value="inreview" className="bg-white text-slate-700 font-semibold">In Review</option>
-                  <option value="done" className="bg-white text-slate-700 font-semibold">Done</option>
+                  {task.status === "inreview" && (
+                    <option value="done" className="bg-white text-slate-700 font-semibold">Done</option>
+                  )}
                 </select>
                 <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/95 pointer-events-none stroke-[3]" />
               </div>
             )}
             {isDone && (
               <span className="inline-flex items-center gap-2 text-xs font-extrabold px-3 py-1.5 rounded-full bg-emerald-600/90 text-white shadow-sm">
+                <Lock size={12} className="stroke-[3]" />
                 <span>Completed</span>
               </span>
             )}

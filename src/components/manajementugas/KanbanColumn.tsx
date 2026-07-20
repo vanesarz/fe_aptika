@@ -78,7 +78,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onOpenDetail,
 }) => {
 // Project.created_by may not exist in the mapped Project type; rely on role instead.
-  const isPm = project ? currentUser?.role === "pm" || currentUser?.role === "admin" : false;
+  const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
 
   return (
     <div 

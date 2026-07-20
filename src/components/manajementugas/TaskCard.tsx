@@ -6,7 +6,7 @@ import {
   CheckSquare, 
   Square, 
   Trash2,
-  AlertTriangle 
+  Lock,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Task, Project } from "@/store/useTaskStore";
@@ -64,7 +64,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isPm = project ? currentUser?.role === "pm" : false;
+  const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
   const isAssignee = task.assigneeId === currentUser?.id;
 
   const isDone = task.status === "done";
@@ -92,15 +92,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       return;
     }
 
-    // PM can mark ANY task as done when it's in_review
+    // PM can approve task when it's in_review
     if (isPm && task.status === "inreview") {
-      onMoveStatus(task.id, "done");
-      return;
-    }
-
-    // Fallback (legacy wiring)
-    if (onApprove) {
-      onApprove(task.id);
+      if (onApprove) {
+        onApprove(task.id);
+      }
       return;
     }
 
@@ -191,6 +187,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               {config.label}
             </span>
 
+            {isDone && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold border text-emerald-600 bg-emerald-50 border-emerald-200">
+                <Lock size={9} className="stroke-[3.5]" />
+                Completed
+              </span>
+            )}
+
             {/* Assignee Avatar */}
             <Avatar 
               name={task.assigneeName || "Unassigned"} 
@@ -200,19 +203,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
             {/* Options Menu */}
             <div className="relative flex-shrink-0" ref={menuRef}>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (isDone) return;
-                  setActiveMenu(!activeMenu);
-                }}
-                disabled={isDone}
-                className={`p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors ${
-                  isDone ? "opacity-40 cursor-not-allowed" : ""
-                }`}
-              >
-                <MoreVertical size={13} />
-              </button>
+              {!isDone && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveMenu(!activeMenu);
+                  }}
+                  className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <MoreVertical size={13} />
+                </button>
+              )}
               
               {activeMenu && !isDone && (
                 <div className="absolute right-0 mt-1 w-40 bg-white border border-slate-200 shadow-xl rounded-xl z-20 py-1 text-[10px] text-slate-600">
@@ -224,7 +225,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                         { key: "inprogress", label: "In Progress" },
                         { key: "inreview", label: "In Review" },
                         { key: "done", label: "Done" }
-                      ].map((opt) => (
+                      ].filter((opt) => opt.key !== "done" || task.status === "inreview").map((opt) => (
                         <button
                           key={opt.key}
                           disabled={
@@ -245,33 +246,37 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
                   {isPm && (
                     <>
-                      <div className="border-t border-slate-100 my-1" />
-                      <span className="px-2.5 py-1 text-[8px] font-extrabold text-slate-400 uppercase tracking-widest block">Tugaskan Ke</span>
-                      {members.map((m) => (
-                        <button
-                          key={m.user?.id ?? m.id ?? m.role ?? m.user?.name ?? "member"}
-                          disabled={task.assigneeId === (m.user?.id ?? null)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenu(false);
-                            handleAssignLocal(m.user?.id ?? null);
-                          }}
-                          className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium truncate"
-                        >
-                          {m.user?.name}
-                        </button>
-                      ))}
-                      <button
-                        disabled={task.assigneeId === null}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenu(false);
-                          handleAssignLocal(null);
-                        }}
-                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium"
-                      >
-                        Unassign (Lepas)
-                      </button>
+                      {task.status !== "inreview" && (
+                        <>
+                          <div className="border-t border-slate-100 my-1" />
+                          <span className="px-2.5 py-1 text-[8px] font-extrabold text-slate-400 uppercase tracking-widest block">Tugaskan Ke</span>
+                          {members.map((m) => (
+                            <button
+                              key={m.user?.id ?? m.id ?? m.role ?? m.user?.name ?? "member"}
+                              disabled={task.assigneeId === (m.user?.id ?? null)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenu(false);
+                                handleAssignLocal(m.user?.id ?? null);
+                              }}
+                              className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium truncate"
+                            >
+                              {m.user?.name}
+                            </button>
+                          ))}
+                          <button
+                            disabled={task.assigneeId === null}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenu(false);
+                              handleAssignLocal(null);
+                            }}
+                            className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium"
+                          >
+                            Unassign (Lepas)
+                          </button>
+                        </>
+                      )}
                       
                       <div className="border-t border-slate-100 my-1" />
                       <button

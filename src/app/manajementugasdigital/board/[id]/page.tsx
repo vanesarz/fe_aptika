@@ -84,7 +84,7 @@ export default function KanbanBoardPage() {
 
   // Join request management states
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [, setLoadingRequests] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [processingRequestId, setProcessingRequestId] = useState<number | null>(null);
 
@@ -94,6 +94,22 @@ export default function KanbanBoardPage() {
 
   const handleUpdateTaskDetails = async (taskId: number, payload: any) => {
     try {
+      if (payload.status === "done") {
+        const task = tasks.find(t => t.id === taskId);
+        if (task?.status !== "inreview") {
+          showToast.error("Tugas harus berada di status In Review sebelum dapat diselesaikan.");
+          return false;
+        }
+        const ok = await useTaskStore.getState().approveTask(taskId);
+        if (ok) {
+          await fetchTasks(projectId);
+          const updatedTask = useTaskStore.getState().tasks.find(t => t.id === taskId);
+          if (updatedTask) setSelectedTask(updatedTask);
+          return true;
+        }
+        return false;
+      }
+
       const apiPayload = { ...payload };
       if (payload.status) {
         if (payload.status === "inprogress") apiPayload.status = "in_progress";
@@ -121,14 +137,18 @@ export default function KanbanBoardPage() {
 
   // Open detail modal if task query parameter exists in URL
   const taskQuery = searchParams?.get("task");
+
   useEffect(() => {
-    if (taskQuery && tasks.length > 0) {
-      const tId = Number(taskQuery);
-      const matchedTask = tasks.find(t => t.id === tId);
-      if (matchedTask) {
-        setSelectedTask(matchedTask);
-        setIsDetailModalOpen(true);
-      }
+    if (!taskQuery || tasks.length === 0) return;
+
+    const matchedTask = tasks.find(
+      (t) => t.id === Number(taskQuery)
+    );
+
+    if (matchedTask) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedTask(matchedTask);
+      setIsDetailModalOpen(true);
     }
   }, [taskQuery, tasks]);
 
@@ -146,9 +166,8 @@ export default function KanbanBoardPage() {
   }, [projects, projectId]);
 
   const isPm = useMemo(() => {
-    // PM hanya berdasarkan role user, bukan created_by
-    return currentUser?.role === "pm";
-  }, [currentUser]);
+    return currentProject ? (currentProject.created_by === currentUser?.id || currentUser?.role === "admin") : false;
+  }, [currentProject, currentUser]);
 
 
   useEffect(() => {
@@ -173,9 +192,19 @@ export default function KanbanBoardPage() {
   };
 
   useEffect(() => {
-    if (isPm && projectId) {
-      fetchRequests();
-    }
+    if (!isPm || !projectId) return;
+
+    const loadRequests = async () => {
+      try {
+        const res = await getJoinRequests(projectId);
+
+        setJoinRequests(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadRequests();
   }, [isPm, projectId]);
 
   // Click outside handlers for dropdowns
@@ -191,8 +220,6 @@ export default function KanbanBoardPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -310,16 +337,20 @@ export default function KanbanBoardPage() {
     }
 
     const nextStatusMap: Record<string, Task["status"]> = {
-      todo: "done",
-      inprogress: "done",
+      todo: "inprogress",
+      inprogress: "inreview",
       inreview: "done",
-      done: "todo",
+      done: "done" // No next status after done,
     };
     const nextFStatus = nextStatusMap[task.status];
 
-    // Non-PM: tidak boleh mengubah ke DONE
-    if (!isPm && nextFStatus === "done") {
-      showToast.error("Member biasa hanya bisa sampai status In Review.");
+    // HANYA PM yang boleh ke DONE
+    if (nextFStatus === "done") {
+      if (!isPm) {
+        showToast.error("Hanya Project Manager yang dapat menyelesaikan tugas.");
+        return;
+      }
+      handleApproveTask(task.id);
       return;
     }
 
@@ -332,17 +363,37 @@ export default function KanbanBoardPage() {
     }
   };
 
-  const handleMoveStatus = async (taskId: number, nextStatus: Task["status"]) => {
-    const task = tasks.find(t => t.id === taskId);
+  const handleMoveStatus = async (
+    taskId: number,
+    nextStatus: Task["status"]
+  ) => {
+    const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
     const isAssignee = task.assigneeId === currentUser?.id;
+
+    // Member cuma boleh ubah task miliknya
     if (!isPm && !isAssignee) {
       showToast.error("Anda hanya boleh mengubah status tugas yang ditugaskan kepada Anda.");
       return;
     }
 
+    // HANYA PM yang boleh ke DONE
+    if (nextStatus === "done") {
+      if (!isPm) {
+        showToast.error("Hanya Project Manager yang dapat menyelesaikan tugas.");
+        return;
+      }
+      if (task.status !== "inreview") {
+        showToast.error("Tugas harus berada di status In Review sebelum dapat diselesaikan.");
+        return;
+      }
+      handleApproveTask(task.id);
+      return;
+    }
+
     const success = await modifyTaskStatus(task, nextStatus);
+
     if (success) {
       showToast.success("Status tugas berhasil diperbarui.");
     } else {
@@ -450,8 +501,16 @@ export default function KanbanBoardPage() {
       if (taskToMove.status === targetStatus) return;
 
       // Non-PM: tidak boleh mengubah ke DONE
-      if (!isPm && targetStatus === "done") {
-        showToast.error("Member biasa hanya bisa sampai status In Review.");
+      if (targetStatus === "done") {
+        if (!isPm) {
+          showToast.error("Member biasa hanya bisa sampai status In Review.");
+          return;
+        }
+        if (taskToMove.status !== "inreview") {
+          showToast.error("Tugas harus berada di status In Review sebelum dapat diselesaikan.");
+          return;
+        }
+        handleApproveTask(taskToMove.id);
         return;
       }
 
@@ -480,6 +539,11 @@ export default function KanbanBoardPage() {
 
       if (!isPm) {
         showToast.error("Hanya Project Manager yang dapat mengubah penerima tugas.");
+        return;
+      }
+
+      if (taskToMove.status === "inreview") {
+        showToast.error("Tidak dapat mengubah penerima tugas saat status In Review.");
         return;
       }
 
