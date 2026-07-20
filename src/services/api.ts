@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
-  //baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  //baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -1171,3 +1171,44 @@ export const deleteMagang = async (id: number) => {
   const res = await api.delete(`/magang/${id}`);
   return res.data;
 };
+
+// ─── NOTA DINAS (API) ─────────────────────────────────────
+export const getNotaDinasList = async (params?: { search?: string; status?: string; page?: number; per_page?: number }) => {
+  const res = await api.get("/nota-dinas", { params });
+  return res.data;
+};
+
+export const getNotaDinasById = async (id: number) => {
+  const res = await api.get(`/nota-dinas/${id}`);
+  return res.data;
+};
+
+export const createNotaDinas = async (payload: FormData) => {
+  const res = await api.post("/nota-dinas", payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+export const updateNotaDinas = async (id: number, payload: FormData) => {
+  // Use POST with _method=PUT for file uploads in Laravel
+  payload.append("_method", "PUT");
+  const res = await api.post(`/nota-dinas/${id}`, payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+export const deleteNotaDinas = async (id: number) => {
+  const res = await api.delete(`/nota-dinas/${id}`);
+  return res.data;
+};
+
+export const exportNotaDinas = async (params?: { status?: string }) => {
+  const res = await api.get("/nota-dinas-export", {
+    params,
+    responseType: "blob",
+  });
+  return res.data;
+};
+

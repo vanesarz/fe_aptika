@@ -15,7 +15,7 @@ export default function AdministrasiSuratPage() {
       iconBg: "bg-blue-100",
       actionText: "Buat Surat",
       actionColor: "text-blue-600",
-      path: "#"
+      path: "/administrasisurat/nota-dinas"
     },
     {
       id: "pentest",
