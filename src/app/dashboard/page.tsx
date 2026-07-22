@@ -164,40 +164,40 @@ export default function Homepage() {
         </div>
       </div>
 
-      {/* Title Section (Same Style as Administrasi Surat Card Title Header) */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+      {/* Title Section (Frosted Glass Transparent Style) */}
+      <div className="bg-white/50 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-white/70">
         <h2 className="text-[22px] font-bold text-blue-700 mb-2">
           Pilih Modul Service
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-600 font-medium">
           Silakan pilih modul layanan yang ingin Anda kelola untuk mengakses dashboard dan fitur terkait.
         </p>
       </div>
 
-      {/* Grid of Service Button Cards */}
+      {/* Grid of Service Button Cards (Frosted Glass Kaca Transparent Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => (
           <div
             key={card.id}
             onClick={() => router.push(card.path)}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col cursor-pointer hover:shadow-md hover:border-blue-200 transition-all duration-200 group h-full"
+            className="bg-white/45 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/70 flex flex-col cursor-pointer hover:bg-white/75 hover:shadow-xl hover:border-blue-400/60 transition-all duration-200 group h-full"
           >
             <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${card.iconBg}`}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 shadow-sm border border-white/80 ${card.iconBg}`}
             >
               {card.icon}
             </div>
 
-            <h3 className="text-base font-bold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">
+            <h3 className="text-base font-extrabold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">
               {card.title}
             </h3>
 
-            <p className="text-[13px] text-slate-500 leading-relaxed flex-grow">
+            <p className="text-[13px] text-slate-600 leading-relaxed flex-grow font-semibold">
               {card.desc}
             </p>
 
             <div
-              className={`flex items-center gap-1.5 mt-6 font-semibold text-[13px] ${card.actionColor}`}
+              className={`flex items-center gap-1.5 mt-6 font-bold text-[13px] ${card.actionColor}`}
             >
               <span>{card.actionText}</span>
               <ArrowRight

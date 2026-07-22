@@ -66,7 +66,7 @@ export default function LoginPage() {
           flex: 1; position: relative; overflow: hidden;
           display: flex; flex-direction: column; justify-content: center;
           padding: 64px 56px;
-          background: linear-gradient(145deg, #0f2540 0%, #1a3a6e 45%, #1d4ed8 100%);
+          background: linear-gradient(145deg, rgba(15,37,64,0.88) 0%, rgba(26,58,110,0.85) 45%, rgba(29,78,216,0.82) 100%), url('/bg-diskominfo.png') center/cover no-repeat;
         }
         .left-decor { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
         .left-accent {

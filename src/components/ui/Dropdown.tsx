@@ -65,7 +65,7 @@ export default function Dropdown({
       {/* Menu overlay */}
       {isOpen && (
         <div className={`
-          absolute z-30 mt-1.5 w-48 rounded-xl border border-slate-100 bg-white shadow-lg ring-1 ring-slate-900/5
+          absolute z-50 mt-1.5 w-48 rounded-xl border border-slate-100 bg-white shadow-lg ring-1 ring-slate-900/5
           divide-y divide-slate-50 overflow-hidden outline-none animate-in fade-in slide-in-from-top-1 duration-150
           ${alignClasses}
         `}>
