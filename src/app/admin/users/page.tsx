@@ -59,7 +59,7 @@ export default function UsersCrudPage() {
         const u = JSON.parse(uStr);
         setCurrentUser(u);
         if (u.role !== "admin") {
-          router.push("/rekayasaaplikasi/dashboard");
+          router.push("/dashboard");
         } else {
           setAuthorized(true);
         }

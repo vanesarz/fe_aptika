@@ -10,6 +10,7 @@ export interface MainLayoutProps {
   subtitle?: string;
   isPrintPage?: boolean;
   hideHeader?: boolean;
+  hideSidebar?: boolean;
 }
 
 export default function MainLayout({
@@ -18,6 +19,7 @@ export default function MainLayout({
   subtitle,
   isPrintPage = false,
   hideHeader = false,
+  hideSidebar = false,
 }: MainLayoutProps) {
   if (isPrintPage) {
     return (
@@ -42,15 +44,15 @@ export default function MainLayout({
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
-      {/* Sidebar - hidden on mobile, shown on desktop via responsive styles */}
-      <Sidebar />
+      {/* Sidebar - only rendered if hideSidebar is false */}
+      {!hideSidebar && <Sidebar />}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 max-h-screen overflow-hidden">
         {/* Header container */}
         {!hideHeader && (
           <div className="px-6 pt-6 pb-2 flex-shrink-0">
-            <Header title={title} subtitle={subtitle} />
+            <Header title={title} subtitle={subtitle} showBrand={hideSidebar} />
           </div>
         )}
 

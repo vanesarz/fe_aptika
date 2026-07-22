@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
+import { useSidebarStore } from "@/store/useSidebarStore";
 
 const TEAMS = [
   { name: "Integrasi Interoperabilitas", key: "integrasiinteroperabilitas", icon: Network },
@@ -34,12 +35,12 @@ const TEAMS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isCollapsed, isOpenMobile, toggleCollapsed, setOpenMobile, initStore } = useSidebarStore();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [userName, setUserName] = useState("User");
 
   useEffect(() => {
+    initStore();
     if (typeof window !== "undefined") {
       try {
         const uStr = localStorage.getItem("user");
@@ -54,24 +55,15 @@ export default function Sidebar() {
         console.error(err);
       }
     }
-  }, []);
+  }, [initStore]);
 
-  const activeSegment = pathname.split("/")[1] || "rekayasaaplikasi";
-
-  const toggleSidebar = () => {
-    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
-      setIsCollapsed((prev) => !prev);
-      setIsOpen(false);
-      return;
-    }
-
-    setIsOpen((prev) => !prev);
-    setIsCollapsed(false);
-  };
+  const activeSegment = pathname.split("/")[1] || "dashboard";
 
   const handleTeamClick = (key: string) => {
-    setIsOpen(false);
-    if (key === "administrasisurat" || key === "manajementugasdigital") {
+    setOpenMobile(false);
+    if (key === "dashboard") {
+      router.push("/dashboard");
+    } else if (key === "administrasisurat" || key === "manajementugasdigital") {
       router.push(`/${key}`);
     } else {
       router.push(`/${key}/dashboard`);
@@ -81,7 +73,6 @@ export default function Sidebar() {
   const handleLogout = async () => {
     try {
       await logout();
-      // Also delete cookie
       document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     } catch { }
     localStorage.removeItem("token");
@@ -92,10 +83,10 @@ export default function Sidebar() {
   return (
     <>
       {/* Hamburger Toggle Button for Mobile/Tablet */}
-      {!isOpen && (
+      {!isOpenMobile && (
         <button
           className="fixed top-4 left-4 z-50 flex items-center justify-center lg:hidden w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
-          onClick={toggleSidebar}
+          onClick={() => setOpenMobile(true)}
           aria-label="Toggle Menu"
         >
           <PanelLeftOpen size={20} />
@@ -103,10 +94,10 @@ export default function Sidebar() {
       )}
 
       {/* Overlay Backdrop for Mobile/Tablet */}
-      {isOpen && (
+      {isOpenMobile && (
         <div
           className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden transition-opacity duration-200"
-          onClick={() => setIsOpen(false)}
+          onClick={() => setOpenMobile(false)}
         />
       )}
 
@@ -116,7 +107,7 @@ export default function Sidebar() {
         bg-[#0b2146] text-white border-r border-slate-800
         transition-all duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:flex-shrink-0
         ${isCollapsed ? "w-[76px]" : "w-[260px]"}
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        ${isOpenMobile ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Brand Header */}
         <div
@@ -124,7 +115,7 @@ export default function Sidebar() {
         >
           {isCollapsed ? (
             <button
-              onClick={toggleSidebar}
+              onClick={toggleCollapsed}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all animate-in fade-in duration-200"
               title="Expand Sidebar"
             >
@@ -134,7 +125,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between w-full">
               <div
                 className="cursor-pointer flex-grow animate-in fade-in duration-200"
-                onClick={() => router.push("/rekayasaaplikasi/dashboard")}
+                onClick={() => router.push("/dashboard")}
               >
                 <h1 className="text-[15px] font-extrabold tracking-wide uppercase bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                   Aptika Tools
@@ -144,7 +135,7 @@ export default function Sidebar() {
                 </p>
               </div>
               <button
-                onClick={toggleSidebar}
+                onClick={toggleCollapsed}
                 className="flex p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all ml-2"
                 title="Collapse Sidebar"
               >
@@ -170,6 +161,7 @@ export default function Sidebar() {
                 return (
                   <button
                     key={team.key}
+                    title={isCollapsed ? team.name : undefined}
                     className={`
                       w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-semibold
                       transition-all duration-150 select-none outline-none group
@@ -212,7 +204,7 @@ export default function Sidebar() {
                     }
                   `}
                   onClick={() => {
-                    setIsOpen(false);
+                    setOpenMobile(false);
                     router.push("/admin/users");
                   }}
                 >

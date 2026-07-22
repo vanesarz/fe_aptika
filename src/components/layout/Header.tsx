@@ -12,9 +12,10 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 export interface HeaderProps {
   title: string;
   subtitle?: string;
+  showBrand?: boolean;
 }
 
-export default function Header({ title, subtitle }: HeaderProps) {
+export default function Header({ title, subtitle, showBrand = false }: HeaderProps) {
   const router = useRouter();
   const { currentUser, loadCurrentUser } = useTaskStore();
 
@@ -38,7 +39,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const profileMenuItems = [
     {
       label: "Profil Saya",
-      onClick: () => router.push(isAdmin ? "/admin/users" : "/rekayasaaplikasi/dashboard"),
+      onClick: () => router.push(isAdmin ? "/admin/users" : "/dashboard"),
       icon: <User size={14} />,
     },
     {
@@ -51,17 +52,37 @@ export default function Header({ title, subtitle }: HeaderProps) {
 
   return (
     <header className="flex items-center justify-between bg-white border border-slate-100/80 rounded-2xl px-6 py-4 shadow-sm select-none">
-      {/* Title Area */}
-      <div className="flex flex-col gap-0.5">
-        <h1 className="text-base font-extrabold text-slate-800 tracking-wide leading-tight">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-[11px] text-slate-400 font-semibold tracking-wide">
-            {subtitle}
-          </p>
-        )}
-      </div>
+      {/* Title / Brand Area */}
+      {showBrand ? (
+        <div
+          className="flex items-center gap-3 cursor-pointer group"
+          onClick={() => router.push("/dashboard")}
+          title="Kembali ke Beranda"
+        >
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0b2146] via-[#163868] to-[#1d4ed8] flex items-center justify-center text-white font-extrabold text-sm shadow-md group-hover:scale-105 transition-transform">
+            A
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-base font-extrabold text-slate-800 tracking-wider leading-tight group-hover:text-blue-700 transition-colors">
+              APTIKA TOOLS
+            </h1>
+            <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+              Diskominfo Jawa Barat
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-base font-extrabold text-slate-800 tracking-wide leading-tight">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-[11px] text-slate-400 font-semibold tracking-wide">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Right Controls */}
       <div className="flex items-center gap-4">

@@ -19,7 +19,7 @@ export function middleware(request: NextRequest) {
 
   // If user is logged in, restrict access to /login or / and redirect to dashboard
   if (token && (isPublicPath || pathname === "/")) {
-    return NextResponse.redirect(new URL("/rekayasaaplikasi/dashboard", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // If user is NOT logged in and path is protected, redirect to login
@@ -36,6 +36,8 @@ export const config = {
   matcher: [
     "/",
     "/login",
+    "/dashboard",
+    "/dashboard/:path*",
     "/spd/:path*",
     "/rekayasaaplikasi/:path*",
     "/integrasiinteroperabilitas/:path*",

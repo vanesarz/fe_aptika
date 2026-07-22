@@ -46,7 +46,7 @@ export default function LoginPage() {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(data.user || data?.data?.user || { name: "User APTIKA Tools" }));
       document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-      router.push("/rekayasaaplikasi/dashboard");
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.message || "Email atau password salah.");
     } finally {
