@@ -24,8 +24,13 @@ const formatDate = (dateString: string) => {
 const SEVERITY_OPTIONS = ["Kritis", "Tinggi", "Sedang", "Rendah"];
 
 export default function KerentananPage() {
+  const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // View states: 'list' | 'form' | 'preview'
   const [viewState, setViewState] = useState<"list" | "form" | "preview">("list");
@@ -141,8 +146,9 @@ export default function KerentananPage() {
       setViewState("list");
       fetchData();
     } catch (error: any) {
-      alert("Gagal menyimpan data.");
-      console.error(error);
+      const serverMsg = error?.response?.data?.message || (error?.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(", ") : null);
+      alert(`Gagal menyimpan data: ${serverMsg || error?.message || "Terjadi kesalahan pada server"}`);
+      console.error("Save error:", error);
     }
   };
 
@@ -175,10 +181,12 @@ export default function KerentananPage() {
     }
   };
 
+  if (!mounted) return null;
+
   // Preview View Render
   if (viewState === "preview" && previewItem) {
     return (
-      <div className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans bg-slate-100 min-h-screen p-4 md:p-6 pb-20 print:p-0 print:bg-white">
+      <div suppressHydrationWarning className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans bg-slate-100 min-h-screen p-4 md:p-6 pb-20 print:p-0 print:bg-white">
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
           <div className="flex items-center gap-3">
             <button
