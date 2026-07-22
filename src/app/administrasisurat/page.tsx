@@ -23,9 +23,9 @@ export default function AdministrasiSuratPage() {
       desc: "Laporan resmi mengenai hasil pengujian penetrasi keamanan infrastruktur atau aplikasi.",
       icon: <ShieldAlert size={20} className="text-amber-700" />,
       iconBg: "bg-amber-100",
-      actionText: "Pilih Template",
+      actionText: "Kelola Laporan",
       actionColor: "text-amber-700",
-      path: "#"
+      path: "/administrasisurat/hasil-pentest"
     },
     {
       id: "kerentanan",
@@ -33,9 +33,9 @@ export default function AdministrasiSuratPage() {
       desc: "Surat peringatan dini mengenai celah keamanan kritis yang ditemukan pada aplikasi.",
       icon: <TriangleAlert size={20} className="text-red-500" />,
       iconBg: "bg-red-100",
-      actionText: "Pilih Template",
+      actionText: "Kelola Kerentanan",
       actionColor: "text-red-500",
-      path: "#"
+      path: "/administrasisurat/kerentanan"
     },
     {
       id: "spd",
@@ -43,7 +43,7 @@ export default function AdministrasiSuratPage() {
       desc: "Dokumen penugasan resmi untuk perjalanan dinas pegawai di lingkungan kementerian.",
       icon: <PlaneTakeoff size={20} className="text-slate-500" />,
       iconBg: "bg-slate-200",
-      actionText: "Pilih Template",
+      actionText: "Kelola SPD",
       actionColor: "text-slate-500",
       path: "/spd"
     },
@@ -53,9 +53,9 @@ export default function AdministrasiSuratPage() {
       desc: "Surat pengajuan dukungan teknologi informasi, perangkat, atau pengembangan sistem.",
       icon: <Laptop size={20} className="text-blue-600" />,
       iconBg: "bg-blue-100",
-      actionText: "Pilih Template",
+      actionText: "Kelola Permohonan",
       actionColor: "text-blue-600",
-      path: "perubahan-it/dashboard"
+      path: "/perubahan-it/dashboard"
     }
   ];
 

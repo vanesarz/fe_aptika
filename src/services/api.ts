@@ -1250,4 +1250,73 @@ export const assignPerubahanIt = async (id: number, payload: any) => {
   return res.data;
 };
 
+// ─── HASIL PENTEST (API) ──────────────────────────────────
+export const getHasilPentestList = async (params?: { search?: string; status?: string; page?: number; per_page?: number }) => {
+  const res = await api.get("/hasil-pentest", { params });
+  return res.data;
+};
+
+export const getHasilPentestById = async (id: number) => {
+  const res = await api.get(`/hasil-pentest/${id}`);
+  return res.data;
+};
+
+export const createHasilPentest = async (payload: any) => {
+  const res = await api.post("/hasil-pentest", payload);
+  return res.data;
+};
+
+export const updateHasilPentest = async (id: number, payload: any) => {
+  const res = await api.put(`/hasil-pentest/${id}`, payload);
+  return res.data;
+};
+
+export const deleteHasilPentest = async (id: number) => {
+  const res = await api.delete(`/hasil-pentest/${id}`);
+  return res.data;
+};
+
+export const exportHasilPentest = async (params?: { status?: string }) => {
+  const res = await api.get("/hasil-pentest-export", {
+    params,
+    responseType: "blob",
+  });
+  return res.data;
+};
+
+// ─── KERENTANAN (API) ────────────────────────────────────
+export const getKerentananList = async (params?: { search?: string; status?: string; page?: number; per_page?: number }) => {
+  const res = await api.get("/kerentanan", { params });
+  return res.data;
+};
+
+export const getKerentananById = async (id: number) => {
+  const res = await api.get(`/kerentanan/${id}`);
+  return res.data;
+};
+
+export const createKerentanan = async (payload: any) => {
+  const res = await api.post("/kerentanan", payload);
+  return res.data;
+};
+
+export const updateKerentanan = async (id: number, payload: any) => {
+  const res = await api.put(`/kerentanan/${id}`, payload);
+  return res.data;
+};
+
+export const deleteKerentanan = async (id: number) => {
+  const res = await api.delete(`/kerentanan/${id}`);
+  return res.data;
+};
+
+export const exportKerentanan = async (params?: { status?: string }) => {
+  const res = await api.get("/kerentanan-export", {
+    params,
+    responseType: "blob",
+  });
+  return res.data;
+};
+
+
 
