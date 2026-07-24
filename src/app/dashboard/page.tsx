@@ -12,6 +12,7 @@ import {
   Database,
   Briefcase,
   Users,
+  UserCog,
   ArrowRight,
   Sparkles,
   ShieldCheck,
@@ -36,6 +37,8 @@ export default function Homepage() {
       }
     }
   }, []);
+
+  const isAdmin = userRole.toLowerCase() === "admin";
 
   const cards = [
     {
@@ -128,6 +131,21 @@ export default function Homepage() {
       actionColor: "text-orange-600",
       path: "/magang/dashboard",
     },
+    ...(isAdmin
+      ? [
+          {
+            id: "manajemen-user",
+            title: "10. Manajemen User",
+            desc: "Pengelolaan akun pengguna, hak akses, peranan (role), dan status keaktifan user dalam sistem APTIKA.",
+            icon: <UserCog size={22} className="text-violet-600" />,
+            iconBg: "bg-violet-100",
+            actionText: "Kelola User",
+            actionColor: "text-violet-600",
+            badge: "Admin Only",
+            path: "/admin/users",
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -158,7 +176,7 @@ export default function Homepage() {
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-xs font-semibold">
               <Layers size={16} className="text-cyan-300" />
-              <span>Total Modul: <strong className="text-white">9 Layanan</strong></span>
+              <span>Total Modul: <strong className="text-white">{cards.length} Layanan</strong></span>
             </div>
           </div>
         </div>
@@ -180,12 +198,19 @@ export default function Homepage() {
           <div
             key={card.id}
             onClick={() => router.push(card.path)}
-            className="bg-white/45 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/70 flex flex-col cursor-pointer hover:bg-white/75 hover:shadow-xl hover:border-blue-400/60 transition-all duration-200 group h-full"
+            className="bg-white/45 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/70 flex flex-col cursor-pointer hover:bg-white/75 hover:shadow-xl hover:border-blue-400/60 transition-all duration-200 group h-full relative overflow-hidden"
           >
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 shadow-sm border border-white/80 ${card.iconBg}`}
-            >
-              {card.icon}
+            <div className="flex items-center justify-between mb-5">
+              <div
+                className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border border-white/80 ${card.iconBg}`}
+              >
+                {card.icon}
+              </div>
+              {card.badge && (
+                <span className="px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 font-extrabold text-[10px] tracking-wider uppercase border border-violet-200 shadow-sm">
+                  {card.badge}
+                </span>
+              )}
             </div>
 
             <h3 className="text-base font-extrabold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">
@@ -211,3 +236,4 @@ export default function Homepage() {
     </div>
   );
 }
+
